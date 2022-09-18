@@ -29,7 +29,7 @@ impl KeyCtl {
     /// The returned string is null-terminated and contains the following
     /// information about the key:
     ///
-    /// type;uid;gid;perm;description
+    /// `type;uid;gid;perm;description`
     ///
     /// In the above, type and description are strings, uid and gid are
     /// decimal strings, and perm is a hexadecimal permissions mask.
