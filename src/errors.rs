@@ -15,7 +15,7 @@ macro_rules! errno {
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum LinuxError {
+pub enum KeyError {
     /// The keyring wasn't available for modification by the user.
     AccessDenied,
 
@@ -55,30 +55,32 @@ pub enum LinuxError {
     Unknown(i32),
 }
 
-impl Display for LinuxError {
+impl Display for KeyError {
     #[inline(always)]
     fn fmt(&self, f: &mut Formatter) -> Result {
-        <LinuxError as Debug>::fmt(self, f)
+        <KeyError as Debug>::fmt(self, f)
     }
 }
 
 #[cfg(feature = "std")]
-impl Error for LinuxError {}
+impl Error for KeyError {}
 
-#[cfg(feature = "std")]
-pub fn get_libc_error() -> LinuxError {
-    match errno!() {
-        // Create Errors
-        libc::EACCES => LinuxError::AccessDenied,
-        libc::EDQUOT => LinuxError::QuotaExceeded,
-        libc::EFAULT => LinuxError::BadAddress,
-        libc::EINVAL => LinuxError::InvalidArguments,
-        libc::EKEYEXPIRED => LinuxError::KeyExpired,
-        libc::EKEYREVOKED => LinuxError::KeyRevoked,
-        libc::EKEYREJECTED => LinuxError::KeyRejected,
-        libc::ENOMEM => LinuxError::OutOfMemory,
+impl KeyError {
+    /// Obtain the KeyError derived from checking errno
+    pub fn from_errno() -> KeyError {
+        match unsafe { *libc::__errno_location() } {
+            // Create Errors
+            libc::EACCES => KeyError::AccessDenied,
+            libc::EDQUOT => KeyError::QuotaExceeded,
+            libc::EFAULT => KeyError::BadAddress,
+            libc::EINVAL => KeyError::InvalidArguments,
+            libc::EKEYEXPIRED => KeyError::KeyExpired,
+            libc::EKEYREVOKED => KeyError::KeyRevoked,
+            libc::EKEYREJECTED => KeyError::KeyRejected,
+            libc::ENOMEM => KeyError::OutOfMemory,
 
-        // Unknown, provide error code for debugging
-        x => LinuxError::Unknown(x),
+            // Unknown, provide error code for debugging
+            x => KeyError::Unknown(x),
+        }
     }
 }

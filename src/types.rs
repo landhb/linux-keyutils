@@ -31,71 +31,72 @@ pub enum DefaultKeyring {
 }
 
 #[allow(dead_code)]
-pub enum CommandOptions {
+#[repr(u32)]
+pub enum KeyCtlOperation {
     /// Ask for a keyring's ID
-    GetKeyRingId = 0,
+    GetKeyRingId = libc::KEYCTL_GET_KEYRING_ID,
     /// Join or start named session keyring
-    JoinSessionKeyRing = 1,
+    JoinSessionKeyRing = libc::KEYCTL_JOIN_SESSION_KEYRING,
     /// Update a key
-    Update = 2,
+    Update = libc::KEYCTL_UPDATE,
     /// Revoke a key
-    Revoke = 3,
+    Revoke = libc::KEYCTL_REVOKE,
     /// Set ownership of a key
-    Chown = 4,
+    Chown = libc::KEYCTL_CHOWN,
     /// Set permissions of a key
-    SetPerm = 5,
+    SetPerm = libc::KEYCTL_SETPERM,
     /// Describe a key
-    Describe = 6,
+    Describe = libc::KEYCTL_DESCRIBE,
     /// Clear contents of a keyring
-    Clear = 7,
+    Clear = libc::KEYCTL_CLEAR,
     /// Link a key into a keyring
-    Link = 8,
+    Link = libc::KEYCTL_LINK,
     /// Unlink a key from a keyring
-    Unlink = 9,
+    Unlink = libc::KEYCTL_UNLINK,
     /// Search for a key in a keyring
-    Search = 10,
+    Search = libc::KEYCTL_SEARCH,
     /// Read a key or keyring's contents
-    Read = 11,
+    Read = libc::KEYCTL_READ,
     /// Instantiate a partially constructed key
-    Instantiate = 12,
+    Instantiate = libc::KEYCTL_INSTANTIATE,
     /// Negate a partially constructed key
-    Negate = 13,
+    Negate = libc::KEYCTL_NEGATE,
     /// Set default request-key keyring
-    SetRequestKeyKeyring = 14,
+    SetRequestKeyKeyring = libc::KEYCTL_SET_REQKEY_KEYRING,
     /// Set timeout on a key
-    SetTimeout = 15,
+    SetTimeout = libc::KEYCTL_SET_TIMEOUT,
     /// Assume authority to instantiate key
-    AssumeAuthority = 16,
+    AssumeAuthority = libc::KEYCTL_ASSUME_AUTHORITY,
     /// Get key security label
-    GetSecurityLabel = 17,
+    GetSecurityLabel = libc::KEYCTL_GET_SECURITY,
     /// Set my session keyring on my parent process
-    SessionToParent = 18,
+    SessionToParent = libc::KEYCTL_SESSION_TO_PARENT,
     /// Reject a partially constructed key
-    Reject = 19,
+    Reject = libc::KEYCTL_REJECT,
     /// Instantiate a partially constructed key
-    InstantiageIov = 20,
+    InstantiageIov = libc::KEYCTL_INSTANTIATE_IOV,
     /// Invalidate a key
-    Invalidate = 21,
+    Invalidate = libc::KEYCTL_INVALIDATE,
     /// Get a user's persistent keyring
-    GetPersistent = 22,
+    GetPersistent = libc::KEYCTL_GET_PERSISTENT,
     /// Compute Diffie-Hellman values
-    DiffieHellmanCompute = 23,
+    DiffieHellmanCompute = libc::KEYCTL_DH_COMPUTE,
     /// Query public key parameters
-    PubkeyQuery = 24,
+    PubkeyQuery = libc::KEYCTL_PKEY_QUERY,
     /// Encrypt a blob using a public key
-    PubkeyEncrypt = 25,
+    PubkeyEncrypt = libc::KEYCTL_PKEY_ENCRYPT,
     /// Decrypt a blob using a public key
-    PubkeyDecrypt = 26,
+    PubkeyDecrypt = libc::KEYCTL_PKEY_DECRYPT,
     /// Create a public key signature
-    PubkeySign = 27,
+    PubkeySign = libc::KEYCTL_PKEY_SIGN,
     /// Verify a public key signature
-    PubkeyVerify = 28,
+    PubkeyVerify = libc::KEYCTL_PKEY_VERIFY,
     /// Restrict keys allowed to link to a keyring
-    RestrictKeyring = 29,
+    RestrictKeyring = libc::KEYCTL_RESTRICT_KEYRING,
     /// Move keys between keyrings
-    Move = 30,
+    Move = libc::KEYCTL_MOVE,
     /// Find capabilities of keyrings subsystem
-    Capabilities = 31,
+    Capabilities = libc::KEYCTL_CAPABILITIES,
     /// Watch a key or ring of keys for changes
     WatchKey = 32,
 }

@@ -1,14 +1,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod ffi;
-
+// no_std CStr/CString support stabilized in Rust 1.64.0
 extern crate alloc;
-
 use alloc::ffi::CString;
 use core::ffi::CStr;
 
+// Expose error types
 mod errors;
-pub use errors::LinuxError;
+pub use errors::KeyError;
+
+// Primary keyctl interface
+mod keyctl;
+pub use keyctl::KeyCtl;
 
 // Expose types
 mod types;
@@ -21,12 +24,12 @@ pub use permissions::KeyPermissions;
 /// Serial Number for a Key
 ///
 /// Returned by the kernel.
-struct KeySerialId(i32);
+pub struct KeySerialId(i32);
 
 /// The key type is a string that specifies the key's type. Internally, the kernel
 /// defines a number of key types that are available in the core key management code.
-/// Among the types that are available for user-space use and can be specified as the
-/// type argument to add_key() are the following:
+/// The types defined for user-space use and can be specified as the type argument to
+/// add_key() are defined in this enum.
 pub enum KeyType {
     /// Keyrings  are  special  key  types that may contain links to sequences of other
     /// keys of any type.  If this interface is used to create a keyring, then payload
@@ -46,8 +49,8 @@ pub enum KeyType {
     BigKey,
 }
 
-/// Perform the conversion here so that alternative cstrings cannot be used.
-/// Using Rust's type system to ensure only valid key types are used.
+/// Perform the conversion here so that invalid KeyType strings cannot be used.
+/// Using Rust's type system to ensure only valid strings are provided to the syscall.
 impl From<KeyType> for &'static CStr {
     fn from(t: KeyType) -> &'static CStr {
         unsafe {
@@ -76,12 +79,12 @@ impl From<KeyType> for &'static CStr {
 /// keyring IDs:
 fn add_key(
     ktype: KeyType,
+    keyring: KeyringIdentifier,
     description: &str,
     payload: &[u8],
-    keyring: KeyringIdentifier,
-) -> Result<KeySerialId, LinuxError> {
+) -> Result<KeySerialId, KeyError> {
     // Perform conversion into a c string
-    let description = CString::new(description).or(Err(LinuxError::InvalidDescription))?;
+    let description = CString::new(description).or(Err(KeyError::InvalidDescription))?;
 
     // Perform the actual system call
     let res = unsafe {
@@ -97,13 +100,37 @@ fn add_key(
 
     // Return the underlying error
     if res < 0 {
-        return Err(crate::errors::get_libc_error());
+        return Err(KeyError::from_errno());
     }
 
     // Otherwise return the ID
     Ok(KeySerialId(
-        res.try_into().or(Err(LinuxError::InvalidIdentifier))?,
+        res.try_into().or(Err(KeyError::InvalidIdentifier))?,
     ))
+}
+
+/// keyctl() allows user-space programs to perform key manipulation.
+///
+/// The operation performed by keyctl() is determined by the value of the operation argument.
+/// Each of these operations is wrapped by the KeyCtl interface (provided by the this crate)
+/// into individual functions (noted below) to permit the compiler to check types.
+fn keyctl(
+    operation: KeyCtlOperation,
+    arg2: libc::c_ulong,
+    arg3: libc::c_ulong,
+    arg4: libc::c_ulong,
+    arg5: libc::c_ulong,
+) -> Result<libc::c_ulong, KeyError> {
+    // Perform the actual system call
+    let res = unsafe { libc::syscall(libc::SYS_keyctl, operation as u32, arg2, arg3, arg4, arg5) };
+
+    // Return the underlying error
+    if res < 0 {
+        return Err(KeyError::from_errno());
+    }
+
+    // Otherwise return the result
+    Ok(res.try_into().or(Err(KeyError::InvalidIdentifier))?)
 }
 
 #[cfg(test)]
@@ -114,9 +141,9 @@ mod tests {
     fn it_works() {
         add_key(
             KeyType::User,
-            "Test Key",
-            "Test Data".as_bytes(),
             KeyringIdentifier::UserSession,
+            "my-super-secret-test-key",
+            "Test Data".as_bytes(),
         )
         .unwrap();
     }
