@@ -34,19 +34,34 @@ impl KeyCtl {
     /// In the above, type and description are strings, uid and gid are
     /// decimal strings, and perm is a hexadecimal permissions mask.
     pub fn description(&self) -> Result<String, KeyError> {
-        let mut buf = [0u8; 2048];
+        let mut result = vec![0u8; 512];
+
+        // Obtain the description from the kernel
         let len = keyctl!(
             KeyCtlOperation::Describe,
             self.0.as_raw_id() as libc::c_ulong,
-            buf.as_mut_ptr() as _,
-            buf.len() as _
+            result.as_mut_ptr() as _,
+            result.len() as _
         )?;
+
+        /* Attempt to convert to a C string
         let description = CStr::from_bytes_with_nul(&buf[..len as usize])
             .or(Err(KeyError::InvalidDescription))?;
+
+        /// Attempt to convert to a Rust string
         Ok(description
             .to_str()
             .or(Err(KeyError::InvalidDescription))?
-            .to_owned())
+            .to_owned()) */
+
+        // Construct the string from the resulting data
+        let rebuilt =
+            unsafe { String::from_raw_parts(result.as_mut_ptr(), len as _, result.len()) };
+
+        // Prevent automatically dropping the backing buffer
+        let mut s = core::mem::ManuallyDrop::new(result);
+
+        Ok(rebuilt)
     }
 
     /// Read the payload data of a key.
@@ -58,6 +73,17 @@ impl KeyCtl {
             buffer.len() as _
         )? as usize;
         Ok(len)
+    }
+
+    /// Update a key's data payload.
+    ///
+    /// The caller must have write permission on the key specified and the key
+    /// type must support updating.
+    ///
+    /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
+    /// can be positively instantiated with this operation.
+    pub fn update(&self) -> Result<(), KeyError> {
+        Ok(())
     }
 
     /// Change the permissions of the key with the ID provided
@@ -112,17 +138,6 @@ impl KeyCtl {
             KeyCtlOperation::Invalidate,
             self.0.as_raw_id() as libc::c_ulong
         )?;
-        Ok(())
-    }
-
-    /// Update a key's data payload.
-    ///
-    /// The caller must have write permission on the key specified and the key
-    /// type must support updating.
-    ///
-    /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
-    /// can be positively instantiated with this operation.
-    pub fn update(&self) -> Result<(), KeyError> {
         Ok(())
     }
 }
