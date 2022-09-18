@@ -1,5 +1,35 @@
 //! Definitions ported from the C keyutils library
 //!
+use core::ffi::CStr;
+
+/// Serial Number for a Key
+///
+/// Returned by the kernel.
+pub struct KeySerialId(i32);
+
+/// The key type is a string that specifies the key's type. Internally, the kernel
+/// defines a number of key types that are available in the core key management code.
+/// The types defined for user-space use and can be specified as the type argument to
+/// add_key() are defined in this enum.
+pub enum KeyType {
+    /// Keyrings  are  special  key  types that may contain links to sequences of other
+    /// keys of any type.  If this interface is used to create a keyring, then payload
+    /// should be NULL and plen should be zero.
+    KeyRing,
+    /// This is a general purpose key type whose payload may be read and updated by
+    /// user-space  applications. The  key is kept entirely within kernel memory.
+    /// The payload for keys of this type is a blob of arbitrary data of up to 32,767 bytes.
+    User,
+    /// This key type is essentially the same as "user", but it does not permit the key
+    /// to read. This is suitable for storing payloads that you do not want to be
+    /// readable from user space.
+    Logon,
+    /// This key type is similar to "user", but may hold a payload of up to 1 MiB.
+    /// If the key payload is large  enough, then it may be stored encrypted in
+    /// tmpfs (which can be swapped out) rather than kernel memory.
+    BigKey,
+}
+
 #[allow(dead_code)]
 pub enum KeyringIdentifier {
     /// Key ID for thread-specific keyring
@@ -99,4 +129,31 @@ pub enum KeyCtlOperation {
     Capabilities = libc::KEYCTL_CAPABILITIES,
     /// Watch a key or ring of keys for changes
     WatchKey = 32,
+}
+
+impl KeySerialId {
+    /// Construct from a raw i32
+    pub fn new(raw: i32) -> Self {
+        Self(raw)
+    }
+
+    /// Allow conversion into the raw i32 for FFI
+    pub fn as_raw_id(&self) -> i32 {
+        self.0
+    }
+}
+
+/// Perform the conversion here so that invalid KeyType strings cannot be used.
+/// Using Rust's type system to ensure only valid strings are provided to the syscall.
+impl From<KeyType> for &'static CStr {
+    fn from(t: KeyType) -> &'static CStr {
+        unsafe {
+            match t {
+                KeyType::KeyRing => CStr::from_bytes_with_nul_unchecked(b"keyring\0"),
+                KeyType::User => CStr::from_bytes_with_nul_unchecked(b"user\0"),
+                KeyType::Logon => CStr::from_bytes_with_nul_unchecked(b"logon\0"),
+                KeyType::BigKey => CStr::from_bytes_with_nul_unchecked(b"big_key\0"),
+            }
+        }
+    }
 }

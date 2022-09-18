@@ -6,13 +6,6 @@ use core::fmt::Result;
 #[cfg(feature = "std")]
 use std::error::Error;
 
-/// Read errno
-macro_rules! errno {
-    () => {
-        unsafe { *libc::__errno_location() }
-    };
-}
-
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum KeyError {
