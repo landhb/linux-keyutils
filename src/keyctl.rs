@@ -44,24 +44,8 @@ impl KeyCtl {
             result.len() as _
         )?;
 
-        /* Attempt to convert to a C string
-        let description = CStr::from_bytes_with_nul(&buf[..len as usize])
-            .or(Err(KeyError::InvalidDescription))?;
-
-        /// Attempt to convert to a Rust string
-        Ok(description
-            .to_str()
-            .or(Err(KeyError::InvalidDescription))?
-            .to_owned()) */
-
-        // Construct the string from the resulting data
-        let rebuilt =
-            unsafe { String::from_raw_parts(result.as_mut_ptr(), len as _, result.len()) };
-
-        // Prevent automatically dropping the backing buffer
-        let mut s = core::mem::ManuallyDrop::new(result);
-
-        Ok(rebuilt)
+        // Construct the string from the resulting data ensuring utf8 compat
+        Ok(String::from_utf8(result).or(Err(KeyError::InvalidDescription))?)
     }
 
     /// Read the payload data of a key.
