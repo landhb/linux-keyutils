@@ -49,6 +49,17 @@ impl KeyCtl {
     }
 
     /// Read the payload data of a key.
+    ///
+    /// The key must either grant the caller read permission, or grant
+    /// the caller search permission when searched for from the process
+    /// keyrings (i.e., the key is possessed).
+    ///
+    /// The returned data will be processed for presentation according to
+    /// the key type. For example, a keyring will  return  an  array  of
+    /// key_serial_t entries  representing  the IDs of all the keys that
+    /// are linked to it. The user key type will return its data as is.
+    /// If a key type does not implement this function, the operation
+    /// fails with the error EOPNOTSUPP.
     pub fn read(&self, buffer: &mut [u8]) -> Result<usize, KeyError> {
         let len = keyctl!(
             KeyCtlOperation::Read,
@@ -97,11 +108,6 @@ impl KeyCtl {
         //_ = keyctl!(KeyCtlOperation::Chown, self.0.as_raw_id() as libc::c_ulong)?;
         Ok(())
     }
-
-    /*pub fn clear_keyring(&self) -> Result<(), KeyError> {
-        keyctl!(KeyCtlOperation::Clear, self.0.as_raw_id() as libc::c_ulong)?;
-        Ok(())
-    }*/
 
     /// Mark a key as invalid.
     ///
