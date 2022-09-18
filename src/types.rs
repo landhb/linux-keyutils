@@ -1,7 +1,7 @@
 //! Definitions ported from the C keyutils library
 //!
 #[allow(dead_code)]
-pub enum KeyringIdentifiers {
+pub enum KeyringIdentifier {
     /// Key ID for thread-specific keyring
     Thread = -1,
     /// Key ID for process-specific keyring

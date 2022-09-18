@@ -3,5 +3,9 @@ name = "linux-keyutils"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["std"]
+std = []
+
 [dependencies]
 libc = "0.2.132"
