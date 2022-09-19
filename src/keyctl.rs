@@ -1,6 +1,7 @@
 use crate::ffi::{keyctl_impl, KeyCtlOperation, KeySerialId};
 use crate::keyctl;
 use crate::KeyError;
+use alloc::string::String;
 use core::ffi::CStr;
 use core::fmt;
 
@@ -34,7 +35,7 @@ impl KeyCtl {
     /// In the above, type and description are strings, uid and gid are
     /// decimal strings, and perm is a hexadecimal permissions mask.
     pub fn description(&self) -> Result<String, KeyError> {
-        let mut result = vec![0u8; 512];
+        let mut result = alloc::vec![0u8; 512];
 
         // Obtain the description from the kernel
         let len = keyctl!(
@@ -150,7 +151,6 @@ mod tests {
         let mut buf = [0u8; 4096];
 
         let keyctl = KeyCtl::from_id(id);
-        println!("{}", keyctl);
         keyctl.set_perm(0x3f3f0000).unwrap();
         let len = keyctl.read(&mut buf).unwrap();
         assert_eq!(secret.as_bytes(), &buf[..len]);
