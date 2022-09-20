@@ -1,6 +1,6 @@
 use crate::ffi::{keyctl_impl, KeyCtlOperation, KeySerialId};
 use crate::keyctl;
-use crate::KeyError;
+use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
 use core::fmt;
 
@@ -92,11 +92,11 @@ impl KeyCtl {
     /// If the caller doesn't have the CAP_SYS_ADMIN capability, it can change
     /// permissions only only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
-    pub fn set_perm(&self, perm: u32) -> Result<(), KeyError> {
+    pub fn set_perm(&self, perm: KeyPermissions) -> Result<(), KeyError> {
         _ = keyctl!(
             KeyCtlOperation::SetPerm,
             self.0.as_raw_id() as libc::c_ulong,
-            perm as _
+            perm.bits() as _
         )?;
         Ok(())
     }
@@ -149,6 +149,7 @@ impl KeyCtl {
 mod tests {
     use super::*;
     use crate::ffi::{self, KeyType, KeyringIdentifier};
+    use crate::Permission;
     use zeroize::Zeroizing;
 
     #[test]
@@ -166,8 +167,14 @@ mod tests {
         // out of scope
         let mut buf = Zeroizing::new([0u8; 4096]);
 
+        // Allow P/U/G full permissions
+        let mut perms = KeyPermissions::new();
+        perms.set_posessor_perms(Permission::All);
+        perms.set_user_perms(Permission::All);
+        perms.set_group_perms(Permission::All);
+
         let keyctl = KeyCtl::from_id(id);
-        keyctl.set_perm(0x3f3f0000).unwrap();
+        keyctl.set_perm(perms).unwrap();
 
         // Read the secret and verify it matches
         let len = keyctl.read(&mut buf).unwrap();

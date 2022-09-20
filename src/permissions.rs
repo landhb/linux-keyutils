@@ -53,6 +53,11 @@ impl KeyPermissions {
         Self(0)
     }
 
+    /// Obtain the u32 bits for this set
+    pub fn bits(&self) -> u32 {
+        self.0
+    }
+
     /// Set the permissions available to the key's possessor
     pub fn set_posessor_perms(&mut self, perm: Permission) {
         self.0 &= !(0xFF << 24);
