@@ -1,7 +1,6 @@
 //! Create a more rust-like permissions construct, ported from the unix
 //! permissions defined in keyutils.h
 use bitflags::bitflags;
-use core::ops::BitOr;
 
 /// Construct key permissions
 ///
@@ -11,8 +10,8 @@ use core::ops::BitOr;
 /// use linux_keyutils::{Permission, KeyPermissions};
 ///
 /// let mut perms = KeyPermissions::new();
-/// perms.set_user_perms(Permission::All);
-/// perms.set_group_perms(Permission::View);
+/// perms.set_user_perms(Permission::ALL);
+/// perms.set_group_perms(Permission::VIEW);
 /// ```
 pub struct KeyPermissions(u32);
 
@@ -24,29 +23,28 @@ pub struct KeyPermissions(u32);
 /// use linux_keyutils::{Permission, KeyPermissionsBuilder};
 ///
 /// let perms = KeyPermissionsBuilder::builder()
-///             .user(Permission::All)
-///             .group(Permission::View)
+///             .user(Permission::ALL)
+///             .group(Permission::VIEW)
 ///             .build();
 /// ```
 pub struct KeyPermissionsBuilder(KeyPermissions);
 
 bitflags! {
-    #[allow(non_upper_case_globals)]
     pub struct Permission: u8 {
         /// Allows viewing a key's attributes
-        const View = 0x1;
+        const VIEW = 0x1;
         /// Allows reading a key's payload / viewing a keyring
-        const Read = 0x2;
+        const READ = 0x2;
         /// Allows writing/updating a key's payload / adding a link to keyring
-        const Write = 0x4;
+        const WRITE = 0x4;
         /// Allows finding a key in search / searching a keyring
-        const Search = 0x8;
+        const SEARCH = 0x8;
         /// Allows creating a link to a key/keyring
-        const Link = 0x10;
+        const LINK = 0x10;
         /// Allows setting attributes for a key
-        const SetAttr = 0x20;
+        const SETATTR = 0x20;
         /// Allows all actions
-        const All = 0x3f;
+        const ALL = 0x3f;
     }
 }
 
@@ -133,20 +131,20 @@ fn test_posessor_perms() {
     let mut perm = KeyPermissions::default();
 
     // Initial
-    perm.set_posessor_perms(Permission::All);
+    perm.set_posessor_perms(Permission::ALL);
     assert_eq!(perm.0, 0x3f000000);
 
     // Update
-    perm.set_posessor_perms(Permission::Search);
+    perm.set_posessor_perms(Permission::SEARCH);
     assert_eq!(perm.0, 0x08000000);
 
     // Combination
-    perm.set_posessor_perms(Permission::Search | Permission::View);
+    perm.set_posessor_perms(Permission::SEARCH | Permission::VIEW);
     assert_eq!(perm.0, 0x09000000);
 
     // Combination two
     perm.set_posessor_perms(
-        Permission::SetAttr | Permission::View | Permission::Read | Permission::Write,
+        Permission::SETATTR | Permission::VIEW | Permission::READ | Permission::WRITE,
     );
     assert_eq!(perm.0, 0x27000000);
 }
@@ -156,20 +154,20 @@ fn test_user_perms() {
     let mut perm = KeyPermissions::default();
 
     // Initial
-    perm.set_user_perms(Permission::All);
+    perm.set_user_perms(Permission::ALL);
     assert_eq!(perm.0, 0x003f0000);
 
     // Update
-    perm.set_user_perms(Permission::Search);
+    perm.set_user_perms(Permission::SEARCH);
     assert_eq!(perm.0, 0x00080000);
 
     // Combination
-    perm.set_user_perms(Permission::Search | Permission::View);
+    perm.set_user_perms(Permission::SEARCH | Permission::VIEW);
     assert_eq!(perm.0, 0x00090000);
 
     // Combination2
     perm.set_user_perms(
-        Permission::SetAttr | Permission::View | Permission::Read | Permission::Write,
+        Permission::SETATTR | Permission::VIEW | Permission::READ | Permission::WRITE,
     );
     assert_eq!(perm.0, 0x00270000);
 }
@@ -179,20 +177,20 @@ fn test_group_perms() {
     let mut perm = KeyPermissions::default();
 
     // Initial
-    perm.set_group_perms(Permission::All);
+    perm.set_group_perms(Permission::ALL);
     assert_eq!(perm.0, 0x00003f00);
 
     // Update
-    perm.set_group_perms(Permission::Search);
+    perm.set_group_perms(Permission::SEARCH);
     assert_eq!(perm.0, 0x00000800);
 
     // Combination
-    perm.set_group_perms(Permission::Search | Permission::View);
+    perm.set_group_perms(Permission::SEARCH | Permission::VIEW);
     assert_eq!(perm.0, 0x00000900);
 
     // Combination2
     perm.set_group_perms(
-        Permission::SetAttr | Permission::View | Permission::Read | Permission::Write,
+        Permission::SETATTR | Permission::VIEW | Permission::READ | Permission::WRITE,
     );
     assert_eq!(perm.0, 0x00002700);
 }
@@ -202,20 +200,20 @@ fn test_world_perms() {
     let mut perm = KeyPermissions::default();
 
     // Initial
-    perm.set_world_perms(Permission::All);
+    perm.set_world_perms(Permission::ALL);
     assert_eq!(perm.0, 0x0000003f);
 
     // Update
-    perm.set_world_perms(Permission::Search);
+    perm.set_world_perms(Permission::SEARCH);
     assert_eq!(perm.0, 0x00000008);
 
     // Combination
-    perm.set_world_perms(Permission::Search | Permission::View);
+    perm.set_world_perms(Permission::SEARCH | Permission::VIEW);
     assert_eq!(perm.0, 0x00000009);
 
     // Combination2
     perm.set_world_perms(
-        Permission::SetAttr | Permission::View | Permission::Read | Permission::Write,
+        Permission::SETATTR | Permission::VIEW | Permission::READ | Permission::WRITE,
     );
     assert_eq!(perm.0, 0x00000027);
 }
@@ -225,20 +223,20 @@ fn test_combined_perms() {
     let mut perm = KeyPermissions::default();
 
     // Posessor
-    perm.set_posessor_perms(Permission::All);
+    perm.set_posessor_perms(Permission::ALL);
     assert_eq!(perm.0, 0x3f000000);
 
     // User
-    perm.set_user_perms(Permission::View | Permission::Read | Permission::Write);
+    perm.set_user_perms(Permission::VIEW | Permission::READ | Permission::WRITE);
     assert_eq!(perm.0, 0x3f070000);
 
     // Group
-    perm.set_group_perms(Permission::Search | Permission::View);
+    perm.set_group_perms(Permission::SEARCH | Permission::VIEW);
     assert_eq!(perm.0, 0x3f070900);
 
     // World
     perm.set_world_perms(
-        Permission::SetAttr | Permission::View | Permission::Read | Permission::Write,
+        Permission::SETATTR | Permission::VIEW | Permission::READ | Permission::WRITE,
     );
     assert_eq!(perm.0, 0x3f070927);
 }

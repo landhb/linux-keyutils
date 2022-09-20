@@ -169,9 +169,9 @@ mod tests {
 
         // Allow P/U/G full permissions
         let mut perms = KeyPermissions::new();
-        perms.set_posessor_perms(Permission::All);
-        perms.set_user_perms(Permission::All);
-        perms.set_group_perms(Permission::All);
+        perms.set_posessor_perms(Permission::ALL);
+        perms.set_user_perms(Permission::ALL);
+        perms.set_group_perms(Permission::ALL);
 
         let keyctl = KeyCtl::from_id(id);
         keyctl.set_perm(perms).unwrap();
