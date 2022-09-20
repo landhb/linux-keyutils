@@ -13,7 +13,7 @@ pub struct KeySerialId(i32);
 /// add_key() are defined in this enum.
 pub enum KeyType {
     /// Keyrings  are  special  key  types that may contain links to sequences of other
-    /// keys of any type.  If this interface is used to create a keyring, then payload
+    /// keys of any type.  If `add_key` is used to create a keyring, then payload
     /// should be NULL and plen should be zero.
     KeyRing,
     /// This is a general purpose key type whose payload may be read and updated by
