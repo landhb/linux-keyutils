@@ -3,12 +3,31 @@
 use bitflags::bitflags;
 use core::ops::BitOr;
 
-/// Key Handle Permissions Mask
+/// Construct key permissions
 ///
-/// Returned by the kernel.
+/// Usage:
+///
+/// ```
+/// use linux_keyutils::{Permission, KeyPermissions};
+///
+/// let mut perms = KeyPermissions::new();
+/// perms.set_user_perms(Permission::All);
+/// perms.set_group_perms(Permission::View);
+/// ```
 pub struct KeyPermissions(u32);
 
-/// Builder for permissions
+/// Construct key permissions with the builder pattern.
+///
+/// Usage:
+///
+/// ```
+/// use linux_keyutils::{Permission, KeyPermissionsBuilder};
+///
+/// let perms = KeyPermissionsBuilder::builder()
+///             .user(Permission::All)
+///             .group(Permission::View)
+///             .build();
+/// ```
 pub struct KeyPermissionsBuilder(KeyPermissions);
 
 bitflags! {
@@ -37,18 +56,8 @@ impl Default for KeyPermissions {
     }
 }
 
-/// Construct key permissions
-///
-/// Usage:
-///
-/// ```
-/// use linux_keyutils::{Permission, KeyPermissions};
-///
-/// let mut perms = KeyPermissions::new();
-/// perms.set_user_perms(Permission::All);
-/// perms.set_group_perms(Permission::View);
-/// ```
 impl KeyPermissions {
+    /// Create a new KeyPermissions object, defaults to empty permissions
     pub fn new() -> Self {
         Self(0)
     }
@@ -83,20 +92,8 @@ impl KeyPermissions {
     }
 }
 
-/// Construct key permissions with the builder pattern.
-///
-/// Usage:
-///
-/// ```
-/// use linux_keyutils::{Permission, KeyPermissionsBuilder};
-///
-/// let perms = KeyPermissionsBuilder::builder()
-///             .user(Permission::All)
-///             .group(Permission::View)
-///             .build();
-/// ```
 impl KeyPermissionsBuilder {
-    /// Start a builder
+    /// Start a KeyPermissionsBuilder
     pub fn builder() -> Self {
         Self(KeyPermissions::default())
     }

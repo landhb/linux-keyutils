@@ -186,7 +186,7 @@ mod tests {
         // Verify it matches the new content
         let len = keyctl.read(&mut buf).unwrap();
         assert_eq!("wow".as_bytes(), &buf[..len]);
-        //keyctl.invalidate().unwrap()
+        keyctl.invalidate().unwrap()
     }
     /*
     #[test]
