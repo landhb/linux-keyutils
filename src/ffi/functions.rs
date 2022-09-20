@@ -87,5 +87,5 @@ pub(crate) fn keyctl_impl(
     }
 
     // Otherwise return the result
-    Ok(res.try_into().or(Err(KeyError::InvalidIdentifier))?)
+    res.try_into().or(Err(KeyError::InvalidIdentifier))
 }

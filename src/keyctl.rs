@@ -2,7 +2,6 @@ use crate::ffi::{keyctl_impl, KeyCtlOperation, KeySerialId};
 use crate::keyctl;
 use crate::KeyError;
 use alloc::string::String;
-use core::ffi::CStr;
 use core::fmt;
 
 /// Rust Interface for KeyCtl operations using the kernel
@@ -12,7 +11,7 @@ pub struct KeyCtl(KeySerialId);
 
 impl fmt::Display for KeyCtl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let description = self.description().or(Err(fmt::Error::default()))?;
+        let description = self.description().map_err(|_| fmt::Error::default())?;
         write!(f, "KeyCtl({})", description)
     }
 }
@@ -38,7 +37,7 @@ impl KeyCtl {
         let mut result = alloc::vec![0u8; 512];
 
         // Obtain the description from the kernel
-        let len = keyctl!(
+        let _ = keyctl!(
             KeyCtlOperation::Describe,
             self.0.as_raw_id() as libc::c_ulong,
             result.as_mut_ptr() as _,
@@ -46,7 +45,7 @@ impl KeyCtl {
         )?;
 
         // Construct the string from the resulting data ensuring utf8 compat
-        Ok(String::from_utf8(result).or(Err(KeyError::InvalidDescription))?)
+        String::from_utf8(result).or(Err(KeyError::InvalidDescription))
     }
 
     /// Read the payload data of a key.
@@ -78,7 +77,13 @@ impl KeyCtl {
     ///
     /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
     /// can be positively instantiated with this operation.
-    pub fn update(&self) -> Result<(), KeyError> {
+    pub fn update(&self, update: &[u8]) -> Result<(), KeyError> {
+        _ = keyctl!(
+            KeyCtlOperation::Update,
+            self.0.as_raw_id() as libc::c_ulong,
+            update.as_ptr() as _,
+            update.len() as _
+        )?;
         Ok(())
     }
 
@@ -105,8 +110,15 @@ impl KeyCtl {
     /// If the UID is to be changed, the new user must have sufficient quota
     /// to accept the key. The quota deduction will be removed from the old
     /// user to the new user should the UID be changed.
-    pub fn chown(&self, uid: i32, gid: i32) -> Result<(), KeyError> {
-        //_ = keyctl!(KeyCtlOperation::Chown, self.0.as_raw_id() as libc::c_ulong)?;
+    pub fn chown(&self, uid: Option<u32>, gid: Option<u32>) -> Result<(), KeyError> {
+        let uid_opt = uid.unwrap_or(u32::MAX);
+        let gid_opt = gid.unwrap_or(u32::MAX);
+        _ = keyctl!(
+            KeyCtlOperation::Chown,
+            self.0.as_raw_id() as libc::c_ulong,
+            uid_opt as _,
+            gid_opt as _
+        )?;
         Ok(())
     }
 
@@ -152,6 +164,27 @@ mod tests {
 
         let keyctl = KeyCtl::from_id(id);
         keyctl.set_perm(0x3f3f0000).unwrap();
+        let len = keyctl.read(&mut buf).unwrap();
+        assert_eq!(secret.as_bytes(), &buf[..len]);
+        keyctl.invalidate().unwrap()
+    }
+
+    #[test]
+    fn test_user_keyring_chmod() {
+        let secret = "Test Data";
+        let id = ffi::add_key(
+            KeyType::User,
+            KeyringIdentifier::User,
+            "my-super-secret-test-key",
+            secret.as_bytes(),
+        )
+        .unwrap();
+        let mut buf = [0u8; 4096];
+
+        let euid = unsafe { libc::geteuid() };
+
+        let keyctl = KeyCtl::from_id(id);
+        keyctl.chown(Some(euid), None).unwrap();
         let len = keyctl.read(&mut buf).unwrap();
         assert_eq!(secret.as_bytes(), &buf[..len]);
         keyctl.invalidate().unwrap()
