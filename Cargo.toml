@@ -2,6 +2,16 @@
 name = "linux-keyutils"
 version = "0.1.0"
 edition = "2021"
+authors = ["landhb <landhb@users.noreply.github.com>"]
+description = """
+Rust interface to the Linux key-management facility. Provides a safe interface around the raw system
+calls allowing user-space programs to perform key manipulation.
+"""
+homepage = "https://github.com/landhb/linux-keyutils"
+repository = "https://github.com/landhb/linux-keyutils"
+keywords = ["keyutils", "keyctl", "linux","keyring", "secure-storage"]
+readme = "README.md"
+license = "Apache-2.0 OR MIT"
 
 [features]
 default = []
