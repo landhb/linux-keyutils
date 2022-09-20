@@ -148,8 +148,8 @@ impl KeyCtl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use zeroize::Zeroizing;
     use crate::ffi::{self, KeyType, KeyringIdentifier};
+    use zeroize::Zeroizing;
 
     #[test]
     fn test_user_keyring_add_key() {
@@ -167,7 +167,7 @@ mod tests {
         let mut buf = Zeroizing::new([0u8; 4096]);
 
         let keyctl = KeyCtl::from_id(id);
-        //keyctl.set_perm(0x3f3f0000).unwrap();
+        keyctl.set_perm(0x3f3f0000).unwrap();
 
         // Read the secret and verify it matches
         let len = keyctl.read(&mut buf).unwrap();

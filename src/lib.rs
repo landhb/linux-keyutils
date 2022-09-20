@@ -17,4 +17,4 @@ pub use keyctl::KeyCtl;
 
 // Expose KeyPermissions API
 mod permissions;
-pub use permissions::KeyPermissions;
+pub use permissions::{KeyPermissions, KeyPermissionsBuilder, Permission};
