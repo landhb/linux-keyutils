@@ -19,3 +19,6 @@ std = []
 
 [dependencies]
 libc = "0.2.132"
+
+[dev-dependencies]
+zeroize = "1.5.7"

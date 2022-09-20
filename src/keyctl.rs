@@ -60,12 +60,12 @@ impl KeyCtl {
     /// are linked to it. The user key type will return its data as is.
     /// If a key type does not implement this function, the operation
     /// fails with the error EOPNOTSUPP.
-    pub fn read(&self, buffer: &mut [u8]) -> Result<usize, KeyError> {
+    pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
         let len = keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,
-            buffer.as_mut_ptr() as _,
-            buffer.len() as _
+            buffer.as_mut().as_mut_ptr() as _,
+            buffer.as_mut().len() as _
         )? as usize;
         Ok(len)
     }
@@ -77,12 +77,12 @@ impl KeyCtl {
     ///
     /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
     /// can be positively instantiated with this operation.
-    pub fn update(&self, update: &[u8]) -> Result<(), KeyError> {
+    pub fn update<T: AsRef<[u8]>>(&self, update: &T) -> Result<(), KeyError> {
         _ = keyctl!(
             KeyCtlOperation::Update,
             self.0.as_raw_id() as libc::c_ulong,
-            update.as_ptr() as _,
-            update.len() as _
+            update.as_ref().as_ptr() as _,
+            update.as_ref().len() as _
         )?;
         Ok(())
     }
@@ -148,6 +148,7 @@ impl KeyCtl {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use zeroize::Zeroizing;
     use crate::ffi::{self, KeyType, KeyringIdentifier};
 
     #[test]
@@ -160,22 +161,34 @@ mod tests {
             secret.as_bytes(),
         )
         .unwrap();
-        let mut buf = [0u8; 4096];
+
+        // A buffer that is ensured to be zeroed when
+        // out of scope
+        let mut buf = Zeroizing::new([0u8; 4096]);
 
         let keyctl = KeyCtl::from_id(id);
-        keyctl.set_perm(0x3f3f0000).unwrap();
+        //keyctl.set_perm(0x3f3f0000).unwrap();
+
+        // Read the secret and verify it matches
         let len = keyctl.read(&mut buf).unwrap();
         assert_eq!(secret.as_bytes(), &buf[..len]);
-        keyctl.invalidate().unwrap()
-    }
 
+        // Update it
+        keyctl.update(&"wow".as_bytes()).unwrap();
+
+        // Verify it matches the new content
+        let len = keyctl.read(&mut buf).unwrap();
+        assert_eq!("wow".as_bytes(), &buf[..len]);
+        //keyctl.invalidate().unwrap()
+    }
+    /*
     #[test]
     fn test_user_keyring_chmod() {
         let secret = "Test Data";
         let id = ffi::add_key(
             KeyType::User,
             KeyringIdentifier::User,
-            "my-super-secret-test-key",
+            "my-super-secret-test-key2",
             secret.as_bytes(),
         )
         .unwrap();
@@ -184,9 +197,9 @@ mod tests {
         let euid = unsafe { libc::geteuid() };
 
         let keyctl = KeyCtl::from_id(id);
-        keyctl.chown(Some(euid), None).unwrap();
+        keyctl.chown(Some(euid), Some(0)).unwrap();
         let len = keyctl.read(&mut buf).unwrap();
         assert_eq!(secret.as_bytes(), &buf[..len]);
         keyctl.invalidate().unwrap()
-    }
+    }*/
 }
