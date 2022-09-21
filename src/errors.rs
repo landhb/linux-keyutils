@@ -35,6 +35,9 @@ pub enum KeyError {
     /// The keyring doesn't exist.
     KeyringDoesNotExist,
 
+    /// They key does not exist
+    KeyDoesNotExist,
+
     /// Insufficient memory to create a key.
     OutOfMemory,
 
@@ -71,6 +74,7 @@ impl KeyError {
             libc::EKEYREVOKED => KeyError::KeyRevoked,
             libc::EKEYREJECTED => KeyError::KeyRejected,
             libc::ENOMEM => KeyError::OutOfMemory,
+            libc::ENOKEY => KeyError::KeyDoesNotExist,
 
             // Unknown, provide error code for debugging
             x => KeyError::Unknown(x),

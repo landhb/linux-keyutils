@@ -17,9 +17,14 @@ license = "Apache-2.0 OR MIT"
 default = []
 std = []
 
+[[example]]
+name = "keyctl"
+required-features = ["std"]
+
 [dependencies]
 libc = "0.2.132"
 bitflags = "1.3"
 
 [dev-dependencies]
 zeroize = "1.5.7"
+clap = {version = "3.2.22", default-features = false, features = ["std", "derive"]}

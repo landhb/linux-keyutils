@@ -1,4 +1,4 @@
-use crate::ffi::{keyctl_impl, KeyCtlOperation, KeySerialId};
+use crate::ffi::{self, KeyCtlOperation, KeySerialId, KeyType, KeyringIdentifier};
 use crate::keyctl;
 use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
@@ -7,6 +7,7 @@ use core::fmt;
 /// Rust Interface for KeyCtl operations using the kernel
 /// provided keyrings. Each method is implemented to leverage
 /// Rust strict typing.
+#[derive(Copy, Clone)]
 pub struct KeyCtl(KeySerialId);
 
 impl fmt::Display for KeyCtl {
@@ -17,9 +18,39 @@ impl fmt::Display for KeyCtl {
 }
 
 impl KeyCtl {
+    /// Creates or updates a key of the given type and description, instantiates
+    /// it with the payload of length plen, attaches it to the User keyring.
+    ///
+    /// If the destination keyring already contains a key that matches
+    /// the specified type and description, then, if the key type supports
+    /// it, that key will be updated rather than a new key being created;
+    /// if not, a new key (with a different ID) will be created and it will
+    /// displace the link to the extant key from the keyring.
+    pub fn create<D: AsRef<str> + ?Sized, S: AsRef<[u8]> + ?Sized>(
+        description: &D,
+        secret: &S,
+    ) -> Result<Self, KeyError> {
+        let id = ffi::add_key(
+            KeyType::User,
+            KeyringIdentifier::User,
+            description.as_ref(),
+            secret.as_ref(),
+        )?;
+        Ok(Self(id))
+    }
+
     /// Initialize a new `KeyCtl` object from the provided ID
     pub fn from_id(id: KeySerialId) -> Self {
         Self(id)
+    }
+
+    /// Searches the keyring for
+    pub fn from_description(id: KeySerialId) -> Self {
+        Self(id)
+    }
+
+    pub fn get_id(&self) -> KeySerialId {
+        self.0
     }
 
     /// Obtain a string describing the attributes of a specified key.
@@ -148,20 +179,13 @@ impl KeyCtl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ffi::{self, KeyType, KeyringIdentifier};
     use crate::Permission;
     use zeroize::Zeroizing;
 
     #[test]
     fn test_user_keyring_add_key() {
         let secret = "Test Data";
-        let id = ffi::add_key(
-            KeyType::User,
-            KeyringIdentifier::User,
-            "my-super-secret-test-key",
-            secret.as_bytes(),
-        )
-        .unwrap();
+        let keyctl = KeyCtl::create("my-super-secret-test-key", secret).unwrap();
 
         // A buffer that is ensured to be zeroed when
         // out of scope
@@ -173,7 +197,7 @@ mod tests {
         perms.set_user_perms(Permission::ALL);
         perms.set_group_perms(Permission::ALL);
 
-        let keyctl = KeyCtl::from_id(id);
+        // Set the permissions
         keyctl.set_perm(perms).unwrap();
 
         // Read the secret and verify it matches

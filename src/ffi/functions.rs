@@ -8,16 +8,16 @@ use core::ffi::CStr;
 #[macro_export]
 macro_rules! keyctl {
     ( $op:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr ) => {
-        keyctl_impl($op, $a2, $a3, $a4, $a5)
+        crate::ffi::keyctl_impl($op, $a2, $a3, $a4, $a5)
     };
     ( $op:expr, $a2:expr, $a3:expr, $a4:expr) => {
-        keyctl_impl($op, $a2, $a3, $a4, 0)
+        crate::ffi::keyctl_impl($op, $a2, $a3, $a4, 0)
     };
     ( $op:expr, $a2:expr, $a3:expr ) => {
-        keyctl_impl($op, $a2, $a3, 0, 0)
+        crate::ffi::keyctl_impl($op, $a2, $a3, 0, 0)
     };
     ( $op:expr, $a2:expr ) => {
-        keyctl_impl($op, $a2, 0, 0, 0)
+        crate::ffi::keyctl_impl($op, $a2, 0, 0, 0)
     };
 }
 

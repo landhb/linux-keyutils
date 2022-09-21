@@ -8,6 +8,9 @@ extern crate alloc;
 // Internal FFI for raw syscalls
 mod ffi;
 
+// Export certain FFI types
+pub use ffi::{KeySerialId, KeyType, KeyringIdentifier};
+
 // Expose error types
 mod errors;
 pub use errors::KeyError;

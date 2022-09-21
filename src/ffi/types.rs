@@ -5,7 +5,8 @@ use core::ffi::CStr;
 /// Serial Number for a Key
 ///
 /// Returned by the kernel.
-pub struct KeySerialId(i32);
+#[derive(Debug, Copy, Clone)]
+pub struct KeySerialId(pub i32);
 
 /// The key type is a string that specifies the key's type. Internally, the kernel
 /// defines a number of key types that are available in the core key management code.
