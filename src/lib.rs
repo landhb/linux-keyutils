@@ -9,10 +9,10 @@
 //! use linux_keyutils::{KeyPermissionsBuilder, Permission};
 //!
 //! fn example() -> Result<(), KeyError> {
-//!     // Obtain the default User keyring for the current UID/user
+//!     // Obtain the default session keyring for the current process
 //!     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
 //!     // keyrings for processes.
-//!     let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false)?;
+//!     let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false)?;
 //!
 //!     // Insert a new key
 //!     let key = ring.create("my-new-key", b"secret")?;

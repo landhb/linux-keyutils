@@ -3,7 +3,8 @@
 //!
 //! Demo code for the linux_keyutils crate.
 use clap::Parser;
-use linux_keyutils::{KeyCtl, KeyPermissionsBuilder, KeySerialId, Permission};
+use linux_keyutils::{Key, KeyRing, KeyRingIdentifier, KeySerialId};
+use linux_keyutils::{KeyPermissionsBuilder, Permission};
 use std::error::Error;
 use zeroize::Zeroizing;
 
@@ -55,33 +56,38 @@ enum Command {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
+    // Obtain the default User keyring for the current UID/user
+    // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
+    // keyrings for processes.
+    let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false)?;
+
     _ = match args.subcommand {
         Command::Create {
             description,
             secret,
         } => {
-            let key = KeyCtl::create(&description, &secret)?;
+            let key = ring.create(&description, &secret)?;
             println!("Created key with ID {:?}", key.get_id());
         }
         Command::Read { id } => {
-            let key = KeyCtl::from_id(KeySerialId(id));
+            let key = Key::from_id(KeySerialId(id));
             let mut buf = Zeroizing::new([0u8; 2048]);
             let len = key.read(&mut buf)?;
             println!("Secret {:?}", std::str::from_utf8(&buf[..len])?);
         }
         Command::Chown { id, uid, gid } => {
-            let key = KeyCtl::from_id(KeySerialId(id));
+            let key = Key::from_id(KeySerialId(id));
             key.chown(uid, gid)?;
         }
         Command::Chmod { id } => {
-            let key = KeyCtl::from_id(KeySerialId(id));
+            let key = Key::from_id(KeySerialId(id));
             let perms = KeyPermissionsBuilder::builder()
                 .user(Permission::ALL)
                 .build();
             key.set_perm(perms)?;
         }
         Command::Invalidate { id } => {
-            let key = KeyCtl::from_id(KeySerialId(id));
+            let key = Key::from_id(KeySerialId(id));
             key.invalidate()?;
         }
     };

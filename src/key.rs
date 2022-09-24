@@ -169,7 +169,7 @@ mod tests {
         let secret = "Test Data";
 
         // Obtain the default User keyring
-        let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
 
         // Create the key
         let key = ring.create("my-super-secret-test-key", secret).unwrap();
