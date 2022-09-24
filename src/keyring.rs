@@ -92,7 +92,7 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
-    /// Create a link from a keyring to a key.
+    /// Create a link from this keyring to a key.
     ///
     /// If a key with the same type and description is already linked in the keyring,
     /// then that key is displaced from the keyring.
@@ -106,16 +106,30 @@ impl KeyRing {
     ///
     /// The caller must have link permission on the key being added and write
     /// permission on the keyring.
-    pub fn link_key() {}
+    pub fn link_key(&self, key: Key) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Link,
+            key.get_id().as_raw_id() as _,
+            self.id.as_raw_id() as libc::c_ulong
+        )?;
+        Ok(())
+    }
 
-    /// Unlink a key from a keyring.
+    /// Unlink a key from this keyring.
     ///
     /// If the key is not currently linked into the keyring, an error results. If the
     /// last link to a key is removed, then that key will be scheduled for destruction.
     ///
     /// The caller must have write permission on the keyring from which the key is being
     /// removed.
-    pub fn unlink_key() {}
+    pub fn unlink_key(&self, key: Key) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Unlink,
+            key.get_id().as_raw_id() as _,
+            self.id.as_raw_id() as libc::c_ulong
+        )?;
+        Ok(())
+    }
 
     /// Clear the contents of (i.e., unlink all keys from) this keyring.
     ///
