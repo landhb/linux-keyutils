@@ -41,8 +41,8 @@
 //!
 //! fn get_key(description: &str) -> Result<Key, KeyError> {
 //!     // Obtain the default session keyring for the current process
-//!     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
-//!     // keyrings for processes.
+//!     // See `KeyRingIdentifier` and `man 7 keyrings` for more information on default
+//!     // keyrings for processes and users.
 //!     let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false)?;
 //!
 //!     // Lookup an existing key

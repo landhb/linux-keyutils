@@ -9,14 +9,10 @@ use core::ffi::CStr;
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct KeySerialId(pub i32);
 
-/// The key type is a string that specifies the key's type. Internally, the kernel
-/// defines a number of key types that are available in the core key management code.
-/// The types defined for user-space use and can be specified as the type argument to
-/// add_key() are defined in this enum.
+/// Pre-defined key types the kernel understands. See `man 7 keyrings`.
 pub enum KeyType {
     /// Keyrings  are  special  key  types that may contain links to sequences of other
-    /// keys of any type.  If `add_key` is used to create a keyring, then payload
-    /// should be NULL and plen should be zero.
+    /// keys of any type.
     KeyRing,
     /// This is a general purpose key type whose payload may be read and updated by
     /// user-space  applications. The  key is kept entirely within kernel memory.
@@ -32,6 +28,7 @@ pub enum KeyType {
     BigKey,
 }
 
+/// Special identifiers for default keyrings. See `man 7 keyrings`.
 #[allow(dead_code)]
 pub enum KeyRingIdentifier {
     /// Key ID for thread-specific keyring

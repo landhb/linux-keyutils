@@ -3,9 +3,7 @@ use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
 use core::fmt;
 
-/// Rust Interface for KeyCtl operations using the kernel
-/// provided keyrings. Each method is implemented to leverage
-/// Rust strict typing.
+/// A key corresponding to a specific real ID.
 #[derive(Debug, Copy, Clone)]
 pub struct Key(KeySerialId);
 
