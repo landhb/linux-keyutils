@@ -1,5 +1,4 @@
-use crate::ffi::{self, KeyCtlOperation, KeySerialId, KeyType, KeyringIdentifier};
-use crate::keyctl;
+use crate::ffi::{self, KeyCtlOperation, KeySerialId};
 use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
 use core::fmt;
@@ -7,48 +6,23 @@ use core::fmt;
 /// Rust Interface for KeyCtl operations using the kernel
 /// provided keyrings. Each method is implemented to leverage
 /// Rust strict typing.
-#[derive(Copy, Clone)]
-pub struct KeyCtl(KeySerialId);
+#[derive(Debug, Copy, Clone)]
+pub struct Key(KeySerialId);
 
-impl fmt::Display for KeyCtl {
+impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let description = self.description().map_err(|_| fmt::Error::default())?;
-        write!(f, "KeyCtl({})", description)
+        write!(f, "Key({})", description)
     }
 }
 
-impl KeyCtl {
-    /// Creates or updates a key of the given type and description, instantiates
-    /// it with the payload of length plen, attaches it to the User keyring.
-    ///
-    /// If the destination keyring already contains a key that matches
-    /// the specified type and description, then, if the key type supports
-    /// it, that key will be updated rather than a new key being created;
-    /// if not, a new key (with a different ID) will be created and it will
-    /// displace the link to the extant key from the keyring.
-    pub fn create<D: AsRef<str> + ?Sized, S: AsRef<[u8]> + ?Sized>(
-        description: &D,
-        secret: &S,
-    ) -> Result<Self, KeyError> {
-        let id = ffi::add_key(
-            KeyType::User,
-            KeyringIdentifier::User,
-            description.as_ref(),
-            secret.as_ref(),
-        )?;
-        Ok(Self(id))
-    }
-
+impl Key {
     /// Initialize a new `KeyCtl` object from the provided ID
     pub fn from_id(id: KeySerialId) -> Self {
         Self(id)
     }
 
-    /// Searches the keyring for
-    pub fn from_description(id: KeySerialId) -> Self {
-        Self(id)
-    }
-
+    /// Obtain a copy of the ID of this key
     pub fn get_id(&self) -> KeySerialId {
         self.0
     }
@@ -68,7 +42,7 @@ impl KeyCtl {
         let mut result = alloc::vec![0u8; 512];
 
         // Obtain the description from the kernel
-        let _ = keyctl!(
+        let _ = ffi::keyctl!(
             KeyCtlOperation::Describe,
             self.0.as_raw_id() as libc::c_ulong,
             result.as_mut_ptr() as _,
@@ -92,7 +66,7 @@ impl KeyCtl {
     /// If a key type does not implement this function, the operation
     /// fails with the error EOPNOTSUPP.
     pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
-        let len = keyctl!(
+        let len = ffi::keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,
             buffer.as_mut().as_mut_ptr() as _,
@@ -109,7 +83,7 @@ impl KeyCtl {
     /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
     /// can be positively instantiated with this operation.
     pub fn update<T: AsRef<[u8]>>(&self, update: &T) -> Result<(), KeyError> {
-        _ = keyctl!(
+        _ = ffi::keyctl!(
             KeyCtlOperation::Update,
             self.0.as_raw_id() as libc::c_ulong,
             update.as_ref().as_ptr() as _,
@@ -124,7 +98,7 @@ impl KeyCtl {
     /// permissions only only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
     pub fn set_perm(&self, perm: KeyPermissions) -> Result<(), KeyError> {
-        _ = keyctl!(
+        _ = ffi::keyctl!(
             KeyCtlOperation::SetPerm,
             self.0.as_raw_id() as libc::c_ulong,
             perm.bits() as _
@@ -144,13 +118,17 @@ impl KeyCtl {
     pub fn chown(&self, uid: Option<u32>, gid: Option<u32>) -> Result<(), KeyError> {
         let uid_opt = uid.unwrap_or(u32::MAX);
         let gid_opt = gid.unwrap_or(u32::MAX);
-        _ = keyctl!(
+        _ = ffi::keyctl!(
             KeyCtlOperation::Chown,
             self.0.as_raw_id() as libc::c_ulong,
             uid_opt as _,
             gid_opt as _
         )?;
         Ok(())
+    }
+
+    pub fn set_timeout() {
+        todo!()
     }
 
     /// Mark a key as invalid.
@@ -168,7 +146,7 @@ impl KeyCtl {
     /// ations  immediately,  though they are still visible in /proc/keys
     /// (marked with an 'i' flag) until they are actually removed.
     pub fn invalidate(&self) -> Result<(), KeyError> {
-        keyctl!(
+        ffi::keyctl!(
             KeyCtlOperation::Invalidate,
             self.0.as_raw_id() as libc::c_ulong
         )?;
@@ -179,13 +157,18 @@ impl KeyCtl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Permission;
+    use crate::{KeyRing, KeyRingIdentifier, Permission};
     use zeroize::Zeroizing;
 
     #[test]
     fn test_user_keyring_add_key() {
         let secret = "Test Data";
-        let keyctl = KeyCtl::create("my-super-secret-test-key", secret).unwrap();
+
+        // Obtain the default User keyring
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // Create the key
+        let key = ring.add_key("my-super-secret-test-key", secret).unwrap();
 
         // A buffer that is ensured to be zeroed when
         // out of scope
@@ -198,19 +181,19 @@ mod tests {
         perms.set_group_perms(Permission::ALL);
 
         // Set the permissions
-        keyctl.set_perm(perms).unwrap();
+        key.set_perm(perms).unwrap();
 
         // Read the secret and verify it matches
-        let len = keyctl.read(&mut buf).unwrap();
+        let len = key.read(&mut buf).unwrap();
         assert_eq!(secret.as_bytes(), &buf[..len]);
 
         // Update it
-        keyctl.update(&"wow".as_bytes()).unwrap();
+        key.update(&"wow".as_bytes()).unwrap();
 
         // Verify it matches the new content
-        let len = keyctl.read(&mut buf).unwrap();
+        let len = key.read(&mut buf).unwrap();
         assert_eq!("wow".as_bytes(), &buf[..len]);
-        keyctl.invalidate().unwrap()
+        key.invalidate().unwrap()
     }
     /*
     #[test]

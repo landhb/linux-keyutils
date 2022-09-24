@@ -73,25 +73,25 @@ impl KeyPermissions {
     /// Set the permissions available to the key's possessor
     pub fn set_posessor_perms(&mut self, perm: Permission) {
         self.0 &= !(0xFF << 24);
-        self.0 = self.0 + ((perm.bits() as u32) << 24);
+        self.0 += (perm.bits() as u32) << 24;
     }
 
     /// Set the permissions available to the key's owning user (UID)
     pub fn set_user_perms(&mut self, perm: Permission) {
         self.0 &= !(0xFF << 16);
-        self.0 = self.0 + ((perm.bits() as u32) << 16);
+        self.0 += (perm.bits() as u32) << 16;
     }
 
     /// Set the permissions available to the key's owning group (GID)
     pub fn set_group_perms(&mut self, perm: Permission) {
         self.0 &= !(0xFF << 8);
-        self.0 = self.0 + ((perm.bits() as u32) << 8);
+        self.0 += (perm.bits() as u32) << 8;
     }
 
     /// Set the permissions available to any 3rd party
     pub fn set_world_perms(&mut self, perm: Permission) {
         self.0 &= !0xFF;
-        self.0 = self.0 + ((perm.bits() as u32) << 0);
+        self.0 += perm.bits() as u32;
     }
 }
 

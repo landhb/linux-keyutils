@@ -10,24 +10,51 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Build and run unit tests
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+          profile: minimal
+          toolchain: stable
+          override: true
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
-      
-  miri:
-    name: "Miri"
+
+  # Ensure clippy and formatting pass
+  clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install Miri
-        run: |
-          rustup toolchain install nightly --component miri
-          rustup override set nightly
-          cargo miri setup
-      - name: Test with Miri
-        run: cargo miri test
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+    - name: Run Clippy
+      run: cargo clippy --verbose
+    - name: Run RustFmt
+      run: cargo fmt -- --check
+
+  # Run miri (commented out since miri doesn't support the keyctl
+  # syscalls)
+  #miri:
+  #  name: "miri"
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - uses: actions-rs/toolchain@v1
+  #      with:
+  #        profile: minimal
+  #        toolchain: nightly
+  #        override: true
+  #        components: miri
+  #    - name: Setup Miri
+  #      run: cargo +nightly miri setup
+  #    - name: Test with Miri
+  #      run: cargo +nightly miri test

@@ -1,11 +1,12 @@
 //! Definitions ported from the C keyutils library
 //!
+use crate::KeyError;
 use core::ffi::CStr;
 
 /// Serial Number for a Key
 ///
 /// Returned by the kernel.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct KeySerialId(pub i32);
 
 /// The key type is a string that specifies the key's type. Internally, the kernel
@@ -32,7 +33,7 @@ pub enum KeyType {
 }
 
 #[allow(dead_code)]
-pub enum KeyringIdentifier {
+pub enum KeyRingIdentifier {
     /// Key ID for thread-specific keyring
     Thread = -1,
     /// Key ID for process-specific keyring
@@ -156,5 +157,23 @@ impl From<KeyType> for &'static CStr {
                 KeyType::BigKey => CStr::from_bytes_with_nul_unchecked(b"big_key\0"),
             }
         }
+    }
+}
+
+/// Allow easy conversion from i32 to KeySerialId
+impl From<KeySerialId> for i32 {
+    fn from(id: KeySerialId) -> i32 {
+        id.0
+    }
+}
+
+/// Allow easy conversion from u64 to KeySerialId
+impl TryFrom<u64> for KeySerialId {
+    type Error = KeyError;
+
+    fn try_from(n: u64) -> Result<Self, Self::Error> {
+        Ok(Self {
+            0: n.try_into().or(Err(KeyError::InvalidIdentifier))?,
+        })
     }
 }
