@@ -6,7 +6,7 @@ use core::fmt;
 /// Rust Interface for KeyCtl operations using the kernel
 /// provided keyrings. Each method is implemented to leverage
 /// Rust strict typing.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Key(KeySerialId);
 
 impl fmt::Display for Key {

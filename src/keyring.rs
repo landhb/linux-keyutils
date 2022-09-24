@@ -7,7 +7,7 @@ use core::ffi::CStr;
 /// Rust Interface for KeyRing operations using the kernel
 /// provided keyrings. Used to locate, create, search, add,
 /// and remove keys to & from keyrings.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct KeyRing {
     id: KeySerialId,
 }
@@ -166,5 +166,19 @@ mod test {
 
         // Invalidate the key
         key.invalidate().unwrap();
+    }
+
+    #[test]
+    fn test_search_non_existing_key() {
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // Search should succeed
+        let result = ring.search("test_search_no_exist");
+
+        // Assert that the ID is the same
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), KeyError::KeyDoesNotExist);
     }
 }
