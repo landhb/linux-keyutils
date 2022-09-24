@@ -27,6 +27,9 @@
 //!     // Perform manipulations on the key such as setting permissions
 //!     key.set_perm(perms)?;
 //!
+//!     // Or setting a timeout for how long the key should exist
+//!     key.set_timeout(300)?;
+//!
 //!     // Or invalidating (removing) the key
 //!     key.invalidate()?;
 //!     Ok(())
@@ -41,8 +44,8 @@
 //!
 //! fn get_key(description: &str) -> Result<Key, KeyError> {
 //!     // Obtain the default session keyring for the current process
-//!     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
-//!     // keyrings for processes.
+//!     // See `KeyRingIdentifier` and `man 7 keyrings` for more information on default
+//!     // keyrings for processes and users.
 //!     let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false)?;
 //!
 //!     // Lookup an existing key

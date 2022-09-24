@@ -3,9 +3,7 @@ use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
 use core::fmt;
 
-/// Rust Interface for KeyCtl operations using the kernel
-/// provided keyrings. Each method is implemented to leverage
-/// Rust strict typing.
+/// A key corresponding to a specific real ID.
 #[derive(Debug, Copy, Clone)]
 pub struct Key(KeySerialId);
 
@@ -17,7 +15,7 @@ impl fmt::Display for Key {
 }
 
 impl Key {
-    /// Initialize a new `KeyCtl` object from the provided ID
+    /// Initialize a new [Key] object from the provided ID
     pub fn from_id(id: KeySerialId) -> Self {
         Self(id)
     }
@@ -31,8 +29,8 @@ impl Key {
     ///
     /// The key must grant the caller view permission.
     ///
-    /// The returned string is null-terminated and contains the following
-    /// information about the key:
+    /// The returned string contains the following information about
+    /// the key:
     ///
     /// `type;uid;gid;perm;description`
     ///
@@ -58,14 +56,15 @@ impl Key {
     /// The key must either grant the caller read permission, or grant
     /// the caller search permission when searched for from the process
     /// keyrings (i.e., the key is possessed).
-    ///
-    /// The returned data will be processed for presentation according to
-    /// the key type. For example, a keyring will  return  an  array  of
-    /// key_serial_t entries  representing  the IDs of all the keys that
-    /// are linked to it. The user key type will return its data as is.
-    /// If a key type does not implement this function, the operation
-    /// fails with the error EOPNOTSUPP.
     pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
+        // TODO: alternate key types? Currenlty we only support KeyType::User
+        //
+        // The returned data will be processed for presentation according to
+        // the key type. For example, a keyring will  return  an  array  of
+        // key_serial_t entries  representing  the IDs of all the keys that
+        // are linked to it. The user key type will return its data as is.
+        // If a key type does not implement this function, the operation
+        // fails with the error EOPNOTSUPP.
         let len = ffi::keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,
@@ -80,7 +79,7 @@ impl Key {
     /// The caller must have write permission on the key specified and the key
     /// type must support updating.
     ///
-    /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
+    /// A negatively instantiated key (see the description of [Key::reject])
     /// can be positively instantiated with this operation.
     pub fn update<T: AsRef<[u8]>>(&self, update: &T) -> Result<(), KeyError> {
         _ = ffi::keyctl!(
@@ -127,8 +126,57 @@ impl Key {
         Ok(())
     }
 
-    pub fn set_timeout() {
-        todo!()
+    /// Set a timeout on a key.
+    ///
+    /// Specifying the timeout value as 0 clears any existing timeout on the key.
+    ///
+    /// The `/proc/keys` file displays the remaining time until each key will expire.
+    /// (This is the only method of discovering the timeout on a key.)
+    ///
+    /// The caller must either have the setattr permission on the key or hold an
+    /// instantiation authorization token for the key.
+    ///
+    /// The key and any links to the key will be automatically garbage collected
+    /// after the  timeout  expires. Subsequent attempts to access the key will
+    /// then fail with the error EKEYEXPIRED.
+    ///
+    /// This operation cannot be used to set timeouts on revoked, expired, or
+    /// negatively instantiated keys.
+    pub fn set_timeout(&self, seconds: usize) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::SetTimeout,
+            self.0.as_raw_id() as libc::c_ulong,
+            seconds as _
+        )?;
+        Ok(())
+    }
+
+    /// Revoke this key. Similar to [Key::reject] just without the timeout.
+    ///
+    /// The key is scheduled for garbage collection; it will no longer be findable,
+    /// and will be unavailable for further operations. Further attempts to use the
+    /// key will fail with the error EKEYREVOKED.
+    ///
+    /// The caller must have write or setattr permission on the key.
+    pub fn revoke(&self) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(KeyCtlOperation::Revoke, self.0.as_raw_id() as libc::c_ulong)?;
+        Ok(())
+    }
+
+    /// Mark a key as negatively instantiated and set an expiration timer on the key.
+    ///
+    /// This will prevent others from retrieving the key in further searches. And they
+    /// will receive a `EKEYREJECTED` error when performing the search.
+    ///
+    /// Similar to [Key::revoke] but with a timeout.
+    pub fn reject(&self, seconds: usize) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Reject,
+            self.0.as_raw_id() as libc::c_ulong,
+            seconds as _,
+            libc::EKEYREJECTED as _
+        )?;
+        Ok(())
     }
 
     /// Mark a key as invalid.
@@ -136,14 +184,14 @@ impl Key {
     /// To invalidate a key, the caller must have search permission on the
     /// key.
     ///
-    /// This operation marks the key as invalid and  schedules  immediate
-    /// garbage  collection.   The  garbage collector removes the invali‐
+    /// This operation marks the key as invalid and schedules immediate
+    /// garbage collection. The garbage collector removes the invali‐
     /// dated key from all keyrings and deletes the key when  its  refer‐
-    /// ence  count  reaches zero.  After this operation, the key will be
+    /// ence count reaches zero. After this operation, the key will be
     /// ignored by all searches, even if it is not yet deleted.
     ///
     /// Keys that are marked invalid become invisible to normal key oper‐
-    /// ations  immediately,  though they are still visible in /proc/keys
+    /// ations  immediately,  though they are still visible in `/proc/keys`
     /// (marked with an 'i' flag) until they are actually removed.
     pub fn invalidate(&self) -> Result<(), KeyError> {
         ffi::keyctl!(
@@ -195,25 +243,4 @@ mod tests {
         assert_eq!("wow".as_bytes(), &buf[..len]);
         key.invalidate().unwrap()
     }
-    /*
-    #[test]
-    fn test_user_keyring_chmod() {
-        let secret = "Test Data";
-        let id = ffi::add_key(
-            KeyType::User,
-            KeyringIdentifier::User,
-            "my-super-secret-test-key2",
-            secret.as_bytes(),
-        )
-        .unwrap();
-        let mut buf = [0u8; 4096];
-
-        let euid = unsafe { libc::geteuid() };
-
-        let keyctl = KeyCtl::from_id(id);
-        keyctl.chown(Some(euid), Some(0)).unwrap();
-        let len = keyctl.read(&mut buf).unwrap();
-        assert_eq!(secret.as_bytes(), &buf[..len]);
-        keyctl.invalidate().unwrap()
-    }*/
 }

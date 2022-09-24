@@ -37,7 +37,7 @@ jobs:
           override: true
           components: clippy
     - name: Run Clippy
-      run: cargo clippy --verbose
+      run: cargo clippy --verbose -- --deny "warnings"
     - name: Run RustFmt
       run: cargo fmt -- --check
 

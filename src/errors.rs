@@ -6,6 +6,7 @@ use core::fmt::Result;
 #[cfg(feature = "std")]
 use std::error::Error;
 
+/// Error type for this library, optionally implements `std::error::Error`.
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum KeyError {

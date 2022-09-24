@@ -30,6 +30,7 @@ pub struct KeyPermissions(u32);
 pub struct KeyPermissionsBuilder(KeyPermissions);
 
 bitflags! {
+    /// Pre-defined bit-flags to construct permissions easily.
     pub struct Permission: u8 {
         /// Allows viewing a key's attributes
         const VIEW = 0x1;

@@ -4,28 +4,27 @@ use alloc::ffi::CString;
 use core::convert::TryInto;
 use core::ffi::CStr;
 
-/// Rust Interface for KeyRing operations using the kernel
-/// provided keyrings. Used to locate, create, search, add,
-/// and remove keys to & from keyrings.
+/// Interface to perform keyring operations. Used to locate, create,
+/// search, add, and link/unlink keys to & from keyrings.
 #[derive(Debug, Copy, Clone)]
 pub struct KeyRing {
     id: KeySerialId,
 }
 
 impl KeyRing {
-    /// Obtain a KeyRing directly from its ID
-    pub const fn from_id(id: KeySerialId) -> Self {
-        Self { id }
+    /// Create a new keyring with the given description
+    pub fn create<D: AsRef<str> + ?Sized>(_description: &D) -> Result<Self, KeyError> {
+        todo!()
     }
 
     /// Obtain a KeyRing from its special identifier.
     ///
-    /// If the create argument is true, then this method will
-    /// attempt to create the keyring. Otherwise it will only
-    /// succeed if the keyring already exists and is valid.
+    /// If the create argument is true, then this method will attempt
+    /// to create the keyring. Otherwise it will only succeed if the
+    /// keyring already exists and is valid.
     ///
-    /// Internally this uses KEYCTL_GET_KEYRING_ID to resolve
-    /// a keyrings real ID from the special identifier.
+    /// Internally this uses KEYCTL_GET_KEYRING_ID to resolve a keyrings
+    /// real ID from the special identifier.
     pub fn from_special_id(id: KeyRingIdentifier, create: bool) -> Result<Self, KeyError> {
         let id: KeySerialId = ffi::keyctl!(
             KeyCtlOperation::GetKeyRingId,
@@ -59,12 +58,10 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
-    /// Search for a key in a keyring tree, returning its ID and optionally linking
-    /// it to a specified keyring.
+    /// Search for a key in the keyring tree, starting with this keyring as the head,
+    /// returning its ID.
     ///
-    /// The tree to be searched is specified by passing the ID of the head keyring
-    /// in arg2 (cast to key_serial_t). The search is performed breadth-first and
-    /// recursively.
+    /// The search is performed breadth-first and recursively.
     ///
     /// The source keyring must grant search permission to the caller. When
     /// performing the recursive search, only keyrings that grant the caller search
@@ -92,7 +89,7 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
-    /// Create a link from a keyring to a key.
+    /// Create a link from this keyring to a key.
     ///
     /// If a key with the same type and description is already linked in the keyring,
     /// then that key is displaced from the keyring.
@@ -106,22 +103,37 @@ impl KeyRing {
     ///
     /// The caller must have link permission on the key being added and write
     /// permission on the keyring.
-    pub fn link_key() {}
+    pub fn link_key(&self, key: Key) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Link,
+            key.get_id().as_raw_id() as _,
+            self.id.as_raw_id() as libc::c_ulong
+        )?;
+        Ok(())
+    }
 
-    /// Unlink a key from a keyring.
+    /// Unlink a key from this keyring.
     ///
     /// If the key is not currently linked into the keyring, an error results. If the
     /// last link to a key is removed, then that key will be scheduled for destruction.
     ///
     /// The caller must have write permission on the keyring from which the key is being
     /// removed.
-    pub fn unlink_key() {}
+    pub fn unlink_key(&self, key: Key) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Unlink,
+            key.get_id().as_raw_id() as _,
+            self.id.as_raw_id() as libc::c_ulong
+        )?;
+        Ok(())
+    }
 
     /// Clear the contents of (i.e., unlink all keys from) this keyring.
     ///
     /// The caller must have write permission on the keyring.
-    pub fn clear(&self) {
-        todo!()
+    pub fn clear(&self) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(KeyCtlOperation::Clear, self.id.as_raw_id() as libc::c_ulong)?;
+        Ok(())
     }
 }
 
