@@ -195,25 +195,4 @@ mod tests {
         assert_eq!("wow".as_bytes(), &buf[..len]);
         key.invalidate().unwrap()
     }
-    /*
-    #[test]
-    fn test_user_keyring_chmod() {
-        let secret = "Test Data";
-        let id = ffi::add_key(
-            KeyType::User,
-            KeyringIdentifier::User,
-            "my-super-secret-test-key2",
-            secret.as_bytes(),
-        )
-        .unwrap();
-        let mut buf = [0u8; 4096];
-
-        let euid = unsafe { libc::geteuid() };
-
-        let keyctl = KeyCtl::from_id(id);
-        keyctl.chown(Some(euid), Some(0)).unwrap();
-        let len = keyctl.read(&mut buf).unwrap();
-        assert_eq!(secret.as_bytes(), &buf[..len]);
-        keyctl.invalidate().unwrap()
-    }*/
 }

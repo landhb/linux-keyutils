@@ -172,8 +172,6 @@ impl TryFrom<u64> for KeySerialId {
     type Error = KeyError;
 
     fn try_from(n: u64) -> Result<Self, Self::Error> {
-        Ok(Self {
-            0: n.try_into().or(Err(KeyError::InvalidIdentifier))?,
-        })
+        Ok(Self(n.try_into().or(Err(KeyError::InvalidIdentifier))?))
     }
 }
