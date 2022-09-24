@@ -131,6 +131,10 @@ impl Key {
         Ok(())
     }
 
+    pub fn set_timeout() {
+        todo!()
+    }
+
     /// Mark a key as invalid.
     ///
     /// To invalidate a key, the caller must have search permission on the

@@ -57,6 +57,55 @@ impl KeyRing {
         )?;
         Ok(Key::from_id(id))
     }
+
+    /// Search for a key in a keyring tree, returning its ID and optionally linking
+    /// it to a specified keyring.
+    ///
+    /// The tree to be searched is specified by passing the ID of the head keyring
+    /// in arg2 (cast to key_serial_t). The search is performed breadth-first and
+    /// recursively.
+    ///
+    /// The source keyring must grant search permission to the caller. When
+    /// performing the recursive search, only keyrings that grant the caller search
+    /// permission will be searched. Only keys with for which the caller has
+    /// search permission can be found.
+    ///
+    /// If the key is found, its ID is returned as the function result.
+    pub fn search() {
+        todo!()
+    }
+
+    /// Create a link from a keyring to a key.
+    ///
+    /// If a key with the same type and description is already linked in the keyring,
+    /// then that key is displaced from the keyring.
+    ///
+    /// Before  creating  the  link,  the  kernel  checks the nesting of the keyrings
+    /// and returns appropriate errors if the link would produce a cycle or if the
+    /// nesting of keyrings would be too deep (The limit on the nesting of keyrings is
+    /// determined by the kernel constant KEYRING_SEARCH_MAX_DEPTH, defined with the
+    /// value 6, and is necessary to prevent overflows on the kernel stack when
+    /// recursively searching keyrings).
+    ///
+    /// The caller must have link permission on the key being added and write
+    /// permission on the keyring.
+    pub fn link_key() {}
+
+    /// Unlink a key from a keyring.
+    ///
+    /// If the key is not currently linked into the keyring, an error results. If the
+    /// last link to a key is removed, then that key will be scheduled for destruction.
+    ///
+    /// The caller must have write permission on the keyring from which the key is being
+    /// removed.
+    pub fn unlink_key() {}
+
+    /// Clear the contents of (i.e., unlink all keys from) this keyring.
+    ///
+    /// The caller must have write permission on the keyring.
+    pub fn clear(&self) {
+        todo!()
+    }
 }
 
 #[cfg(test)]
