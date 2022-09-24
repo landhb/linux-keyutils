@@ -1,8 +1,22 @@
-# linux-keyutils [![cargo-badge-lib][]][cargo-lib] [![docs-badge-lib][]][docs-lib] [![license-badge][]][license] [![rust-version-badge][]][rust-version] [![build][]][build-url] [![codecov][]][codecov-url]  
+# linux-keyutils
+[![cargo-badge-lib][]][cargo-lib] [![docs-badge-lib][]][docs-lib] [![license-badge][]][license] [![rust-version-badge][]][rust-version] [![build][]][build-url] [![codecov][]][codecov-url]
 
 ## Basic Usage
 
+To use `linux-keyutils`, first add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+linux_keyutils = "0.1"
+```
+
 For more please view the full [documentation](https://docs.rs/linux-keyutils).
+
+## Features
+
+* `#![no_std]` by default
+* For std programs KeyError implements `std::error::Error` with the `std` feature of this crate enabled
+* Small footprint, the library only relies on the `libc` and `bitflags` crates
 
 ## License
 
