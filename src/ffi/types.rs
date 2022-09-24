@@ -32,7 +32,7 @@ pub enum KeyType {
 }
 
 #[allow(dead_code)]
-pub enum KeyringIdentifier {
+pub enum KeyRingIdentifier {
     /// Key ID for thread-specific keyring
     Thread = -1,
     /// Key ID for process-specific keyring
@@ -156,5 +156,12 @@ impl From<KeyType> for &'static CStr {
                 KeyType::BigKey => CStr::from_bytes_with_nul_unchecked(b"big_key\0"),
             }
         }
+    }
+}
+
+/// Allow easy conversion from i32 to KeySerialId
+impl From<KeySerialId> for i32 {
+    fn from(id: KeySerialId) -> i32 {
+        id.0
     }
 }

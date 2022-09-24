@@ -1,4 +1,4 @@
-use crate::ffi::{self, KeyCtlOperation, KeySerialId, KeyType, KeyringIdentifier};
+use crate::ffi::{KeyCtlOperation, KeySerialId};
 use crate::keyctl;
 use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
@@ -8,37 +8,16 @@ use core::fmt;
 /// provided keyrings. Each method is implemented to leverage
 /// Rust strict typing.
 #[derive(Copy, Clone)]
-pub struct KeyCtl(KeySerialId);
+pub struct Key(KeySerialId);
 
-impl fmt::Display for KeyCtl {
+impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let description = self.description().map_err(|_| fmt::Error::default())?;
-        write!(f, "KeyCtl({})", description)
+        write!(f, "Key({})", description)
     }
 }
 
-impl KeyCtl {
-    /// Creates or updates a key of the given type and description, instantiates
-    /// it with the payload of length plen, attaches it to the User keyring.
-    ///
-    /// If the destination keyring already contains a key that matches
-    /// the specified type and description, then, if the key type supports
-    /// it, that key will be updated rather than a new key being created;
-    /// if not, a new key (with a different ID) will be created and it will
-    /// displace the link to the extant key from the keyring.
-    pub fn create<D: AsRef<str> + ?Sized, S: AsRef<[u8]> + ?Sized>(
-        description: &D,
-        secret: &S,
-    ) -> Result<Self, KeyError> {
-        let id = ffi::add_key(
-            KeyType::User,
-            KeyringIdentifier::User,
-            description.as_ref(),
-            secret.as_ref(),
-        )?;
-        Ok(Self(id))
-    }
-
+impl Key {
     /// Initialize a new `KeyCtl` object from the provided ID
     pub fn from_id(id: KeySerialId) -> Self {
         Self(id)
@@ -179,13 +158,18 @@ impl KeyCtl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Permission;
+    use crate::{KeyRing, KeyRingIdentifier, Permission};
     use zeroize::Zeroizing;
 
     #[test]
     fn test_user_keyring_add_key() {
         let secret = "Test Data";
-        let keyctl = KeyCtl::create("my-super-secret-test-key", secret).unwrap();
+
+        // Obtain the default User keyring
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
+
+        // Create the key
+        let key = ring.create("my-super-secret-test-key", secret).unwrap();
 
         // A buffer that is ensured to be zeroed when
         // out of scope
@@ -198,19 +182,19 @@ mod tests {
         perms.set_group_perms(Permission::ALL);
 
         // Set the permissions
-        keyctl.set_perm(perms).unwrap();
+        key.set_perm(perms).unwrap();
 
         // Read the secret and verify it matches
-        let len = keyctl.read(&mut buf).unwrap();
+        let len = key.read(&mut buf).unwrap();
         assert_eq!(secret.as_bytes(), &buf[..len]);
 
         // Update it
-        keyctl.update(&"wow".as_bytes()).unwrap();
+        key.update(&"wow".as_bytes()).unwrap();
 
         // Verify it matches the new content
-        let len = keyctl.read(&mut buf).unwrap();
+        let len = key.read(&mut buf).unwrap();
         assert_eq!("wow".as_bytes(), &buf[..len]);
-        keyctl.invalidate().unwrap()
+        key.invalidate().unwrap()
     }
     /*
     #[test]

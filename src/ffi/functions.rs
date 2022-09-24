@@ -1,6 +1,6 @@
 //! Raw System Call Wrappers
 //!
-use super::types::{KeyCtlOperation, KeySerialId, KeyType, KeyringIdentifier};
+use super::types::{KeyCtlOperation, KeySerialId, KeyType};
 use crate::KeyError;
 use alloc::ffi::CString;
 use core::ffi::CStr;
@@ -8,16 +8,16 @@ use core::ffi::CStr;
 #[macro_export]
 macro_rules! keyctl {
     ( $op:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr ) => {
-        crate::ffi::keyctl_impl($op, $a2, $a3, $a4, $a5)
+        $crate::ffi::keyctl_impl($op, $a2, $a3, $a4, $a5)
     };
     ( $op:expr, $a2:expr, $a3:expr, $a4:expr) => {
-        crate::ffi::keyctl_impl($op, $a2, $a3, $a4, 0)
+        $crate::ffi::keyctl_impl($op, $a2, $a3, $a4, 0)
     };
     ( $op:expr, $a2:expr, $a3:expr ) => {
-        crate::ffi::keyctl_impl($op, $a2, $a3, 0, 0)
+        $crate::ffi::keyctl_impl($op, $a2, $a3, 0, 0)
     };
     ( $op:expr, $a2:expr ) => {
-        crate::ffi::keyctl_impl($op, $a2, 0, 0, 0)
+        $crate::ffi::keyctl_impl($op, $a2, 0, 0, 0)
     };
 }
 
@@ -36,7 +36,7 @@ macro_rules! keyctl {
 /// keyring IDs:
 pub(crate) fn add_key(
     ktype: KeyType,
-    keyring: KeyringIdentifier,
+    keyring: libc::c_ulong,
     description: &str,
     payload: &[u8],
 ) -> Result<KeySerialId, KeyError> {
@@ -51,7 +51,7 @@ pub(crate) fn add_key(
             description.as_ptr(),
             payload.as_ptr(),
             payload.len() as libc::size_t,
-            keyring as i32,
+            keyring as u32,
         )
     };
 
