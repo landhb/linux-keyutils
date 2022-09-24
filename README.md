@@ -17,7 +17,7 @@ For more please view the full [documentation](https://docs.rs/linux-keyutils).
 ## Features
 
 * `#![no_std]` by default.
-* For std programs KeyError implements `std::error::Error` with the `std` feature of this crate enabled.
+* For std programs `KeyError` implements `std::error::Error` when the `std` feature of this crate enabled.
 * Small footprint, the library only relies on the `libc` and `bitflags` crates.
 
 ## License
