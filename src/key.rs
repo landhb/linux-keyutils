@@ -126,8 +126,29 @@ impl Key {
         Ok(())
     }
 
-    pub fn set_timeout() {
-        todo!()
+    /// Set a timeout on a key.
+    ///
+    /// Specifying the timeout value as 0 clears any existing timeout on the key.
+    ///
+    /// The /proc/keys file displays the remaining time until each key will expire.
+    /// (This is the only method of discovering the timeout on a key.)
+    ///
+    /// The caller must either have the setattr permission on the key or hold an
+    /// instantiation authorization token for the key.
+    ///
+    /// The key and any links to the key will be automatically garbage collected
+    /// after the  timeout  expires. Subsequent attempts to access the key will
+    /// then fail with the error EKEYEXPIRED.
+    ///
+    /// This operation cannot be used to set timeouts on revoked, expired, or
+    /// negatively instantiated keys.
+    pub fn set_timeout(&self, seconds: usize) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::SetTimeout,
+            self.0.as_raw_id() as libc::c_ulong,
+            seconds as _
+        )?;
+        Ok(())
     }
 
     /// Mark a key as invalid.

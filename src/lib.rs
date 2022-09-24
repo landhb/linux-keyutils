@@ -27,6 +27,9 @@
 //!     // Perform manipulations on the key such as setting permissions
 //!     key.set_perm(perms)?;
 //!
+//!     // Or setting a timeout for how long the key should exist
+//!     key.set_timeout(300)?;
+//!
 //!     // Or invalidating (removing) the key
 //!     key.invalidate()?;
 //!     Ok(())
