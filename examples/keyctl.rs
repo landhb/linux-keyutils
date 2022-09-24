@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             description,
             secret,
         } => {
-            let key = ring.create(&description, &secret)?;
+            let key = ring.add_key(&description, &secret)?;
             println!("Created key with ID {:?}", key.get_id());
         }
         Command::Read { id } => {

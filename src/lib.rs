@@ -15,7 +15,7 @@
 //!     let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false)?;
 //!
 //!     // Insert a new key
-//!     let key = ring.create("my-new-key", b"secret")?;
+//!     let key = ring.add_key("my-new-key", b"secret")?;
 //!
 //!     // Utiltiies to create proper permissions
 //!     let perms = KeyPermissionsBuilder::builder()

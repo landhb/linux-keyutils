@@ -22,11 +22,7 @@ impl Key {
         Self(id)
     }
 
-    /// Searches the keyring for
-    pub fn from_description(id: KeySerialId) -> Self {
-        Self(id)
-    }
-
+    /// Obtain a copy of the ID of this key
     pub fn get_id(&self) -> KeySerialId {
         self.0
     }
@@ -172,7 +168,7 @@ mod tests {
         let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
 
         // Create the key
-        let key = ring.create("my-super-secret-test-key", secret).unwrap();
+        let key = ring.add_key("my-super-secret-test-key", secret).unwrap();
 
         // A buffer that is ensured to be zeroed when
         // out of scope

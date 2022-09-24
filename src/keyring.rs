@@ -1,5 +1,7 @@
 use crate::ffi::{self, KeyCtlOperation};
 use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType};
+use core::convert::TryInto;
+use core::ffi::CStr;
 
 /// Rust Interface for KeyRing operations using the kernel
 /// provided keyrings. Used to locate, create, search, add,
@@ -24,16 +26,14 @@ impl KeyRing {
     /// Internally this uses KEYCTL_GET_KEYRING_ID to resolve
     /// a keyrings real ID from the special identifier.
     pub fn from_special_id(id: KeyRingIdentifier, create: bool) -> Result<Self, KeyError> {
-        let id: i32 = ffi::keyctl!(
+        let id: KeySerialId = ffi::keyctl!(
             KeyCtlOperation::GetKeyRingId,
             id as libc::c_ulong,
             if create { 1 } else { 0 }
         )?
         .try_into()
-        .or(Err(KeyError::KeyringDoesNotExist))?;
-        Ok(Self {
-            id: KeySerialId(id),
-        })
+        .or(Err(KeyError::InvalidIdentifier))?;
+        Ok(Self { id })
     }
 
     /// Creates or updates a key of the given type and description, instantiates
@@ -44,7 +44,7 @@ impl KeyRing {
     /// it, that key will be updated rather than a new key being created;
     /// if not, a new key (with a different ID) will be created and it will
     /// displace the link to the extant key from the keyring.
-    pub fn create<D: AsRef<str> + ?Sized, S: AsRef<[u8]> + ?Sized>(
+    pub fn add_key<D: AsRef<str> + ?Sized, S: AsRef<[u8]> + ?Sized>(
         &self,
         description: &D,
         secret: &S,
@@ -71,8 +71,17 @@ impl KeyRing {
     /// search permission can be found.
     ///
     /// If the key is found, its ID is returned as the function result.
-    pub fn search() {
-        todo!()
+    pub fn search<D: AsRef<str> + ?Sized>(&self, description: &D) -> Result<Key, KeyError> {
+        let id: KeySerialId = ffi::keyctl!(
+            KeyCtlOperation::Search,
+            self.id.as_raw_id() as libc::c_ulong,
+            Into::<&'static CStr>::into(KeyType::User).as_ptr() as _,
+            description.as_ref().as_ptr() as _,
+            0
+        )?
+        .try_into()
+        .or(Err(KeyError::InvalidIdentifier))?;
+        Ok(Key::from_id(id))
     }
 
     /// Create a link from a keyring to a key.
@@ -111,6 +120,7 @@ impl KeyRing {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{KeyPermissionsBuilder, Permission};
 
     #[test]
     fn test_from_special_id() {
@@ -122,5 +132,31 @@ mod test {
         // Test that a keyring that should already exist is returned
         let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
         assert!(ring.id.as_raw_id() > 0);
+    }
+
+    #[test]
+    fn test_search_existing_key() {
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+        let key = ring.add_key("test_search", b"data").unwrap();
+
+        // Ensure we have search permission on the key
+        let perms = KeyPermissionsBuilder::builder()
+            .posessor(Permission::ALL)
+            .user(Permission::ALL)
+            .build();
+
+        // Enforce perms
+        key.set_perm(perms).unwrap();
+
+        // Search should succeed
+        let result = ring.search("test_search").unwrap();
+
+        // Assert that the ID is the same
+        assert_eq!(key.get_id(), result.get_id());
+
+        // Invalidate the key
+        key.invalidate().unwrap();
     }
 }
