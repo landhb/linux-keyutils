@@ -8,7 +8,7 @@
 //! use linux_keyutils::{Key, KeyRing, KeyError, KeyRingIdentifier};
 //! use linux_keyutils::{KeyPermissionsBuilder, Permission};
 //!
-//! fn example() -> Result<(), KeyError> {
+//! fn main() -> Result<(), KeyError> {
 //!     // Obtain the default session keyring for the current process
 //!     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
 //!     // keyrings for processes.
@@ -30,6 +30,24 @@
 //!     // Or invalidating (removing) the key
 //!     key.invalidate()?;
 //!     Ok(())
+//! }
+//! ```
+//!
+//! To look for an existing key you can use the [KeyRing::search] method. Usage:
+//!
+//! ```
+//! use linux_keyutils::{Key, KeyRing, KeyError, KeyRingIdentifier};
+//! use linux_keyutils::{KeyPermissionsBuilder, Permission};
+//!
+//! fn get_key(description: &str) -> Result<Key, KeyError> {
+//!     // Obtain the default session keyring for the current process
+//!     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
+//!     // keyrings for processes.
+//!     let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false)?;
+//!
+//!     // Lookup an existing key
+//!     let key = ring.search(description)?;
+//!     Ok(key)
 //! }
 //! ```
 #![cfg_attr(not(feature = "std"), no_std)]
