@@ -13,19 +13,19 @@ pub struct KeyRing {
 }
 
 impl KeyRing {
-    /// Obtain a KeyRing directly from its ID
-    pub const fn from_id(id: KeySerialId) -> Self {
-        Self { id }
+    /// Create a new keyring with the given description
+    pub fn create<D: AsRef<str> + ?Sized>(_description: &D) -> Result<Self, KeyError> {
+        todo!()
     }
 
     /// Obtain a KeyRing from its special identifier.
     ///
-    /// If the create argument is true, then this method will
-    /// attempt to create the keyring. Otherwise it will only
-    /// succeed if the keyring already exists and is valid.
+    /// If the create argument is true, then this method will attempt
+    /// to create the keyring. Otherwise it will only succeed if the
+    /// keyring already exists and is valid.
     ///
-    /// Internally this uses KEYCTL_GET_KEYRING_ID to resolve
-    /// a keyrings real ID from the special identifier.
+    /// Internally this uses KEYCTL_GET_KEYRING_ID to resolve a keyrings
+    /// real ID from the special identifier.
     pub fn from_special_id(id: KeyRingIdentifier, create: bool) -> Result<Self, KeyError> {
         let id: KeySerialId = ffi::keyctl!(
             KeyCtlOperation::GetKeyRingId,
@@ -59,12 +59,10 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
-    /// Search for a key in a keyring tree, returning its ID and optionally linking
-    /// it to a specified keyring.
+    /// Search for a key in the keyring tree, starting with this keyring as the head,
+    /// returning its ID.
     ///
-    /// The tree to be searched is specified by passing the ID of the head keyring
-    /// in arg2 (cast to key_serial_t). The search is performed breadth-first and
-    /// recursively.
+    /// The search is performed breadth-first and recursively.
     ///
     /// The source keyring must grant search permission to the caller. When
     /// performing the recursive search, only keyrings that grant the caller search

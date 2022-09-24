@@ -17,7 +17,7 @@ impl fmt::Display for Key {
 }
 
 impl Key {
-    /// Initialize a new `KeyCtl` object from the provided ID
+    /// Initialize a new [Key] object from the provided ID
     pub fn from_id(id: KeySerialId) -> Self {
         Self(id)
     }
@@ -31,8 +31,8 @@ impl Key {
     ///
     /// The key must grant the caller view permission.
     ///
-    /// The returned string is null-terminated and contains the following
-    /// information about the key:
+    /// The returned string contains the following information about
+    /// the key:
     ///
     /// `type;uid;gid;perm;description`
     ///
@@ -58,14 +58,15 @@ impl Key {
     /// The key must either grant the caller read permission, or grant
     /// the caller search permission when searched for from the process
     /// keyrings (i.e., the key is possessed).
-    ///
-    /// The returned data will be processed for presentation according to
-    /// the key type. For example, a keyring will  return  an  array  of
-    /// key_serial_t entries  representing  the IDs of all the keys that
-    /// are linked to it. The user key type will return its data as is.
-    /// If a key type does not implement this function, the operation
-    /// fails with the error EOPNOTSUPP.
     pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
+        // TODO: alternate key types? Currenlty we only support KeyType::User
+        //
+        // The returned data will be processed for presentation according to
+        // the key type. For example, a keyring will  return  an  array  of
+        // key_serial_t entries  representing  the IDs of all the keys that
+        // are linked to it. The user key type will return its data as is.
+        // If a key type does not implement this function, the operation
+        // fails with the error EOPNOTSUPP.
         let len = ffi::keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,

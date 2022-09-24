@@ -12,7 +12,7 @@ To use `linux-keyutils`, first add this to your `Cargo.toml`:
 linux_keyutils = "0.1"
 ```
 
-For more please view the full [documentation](https://docs.rs/linux-keyutils).
+For more information please view the full [documentation](https://docs.rs/linux-keyutils).
 
 ## Features
 
