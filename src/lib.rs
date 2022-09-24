@@ -10,7 +10,7 @@
 //!
 //! fn example() -> Result<(), KeyError> {
 //!     // Obtain the default User keyring for the current UID/user
-//!     // See [KeyRingIdentifier] and `man 2 ctl` for more information on default
+//!     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
 //!     // keyrings for processes.
 //!     let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false)?;
 //!
