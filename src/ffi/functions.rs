@@ -5,22 +5,6 @@ use crate::KeyError;
 use alloc::ffi::CString;
 use core::ffi::CStr;
 
-#[macro_export]
-macro_rules! keyctl {
-    ( $op:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr ) => {
-        $crate::ffi::keyctl_impl($op, $a2, $a3, $a4, $a5)
-    };
-    ( $op:expr, $a2:expr, $a3:expr, $a4:expr) => {
-        $crate::ffi::keyctl_impl($op, $a2, $a3, $a4, 0)
-    };
-    ( $op:expr, $a2:expr, $a3:expr ) => {
-        $crate::ffi::keyctl_impl($op, $a2, $a3, 0, 0)
-    };
-    ( $op:expr, $a2:expr ) => {
-        $crate::ffi::keyctl_impl($op, $a2, 0, 0, 0)
-    };
-}
-
 /// add_key() creates or updates a key of the given type and description, instantiates
 /// it with the payload of length plen, attaches it to the nominated keyring, and
 /// returns the key's serial number.

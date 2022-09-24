@@ -1,5 +1,4 @@
-use crate::ffi::{KeyCtlOperation, KeySerialId};
-use crate::keyctl;
+use crate::ffi::{self, KeyCtlOperation, KeySerialId};
 use crate::{KeyError, KeyPermissions};
 use alloc::string::String;
 use core::fmt;
@@ -47,7 +46,7 @@ impl Key {
         let mut result = alloc::vec![0u8; 512];
 
         // Obtain the description from the kernel
-        let _ = keyctl!(
+        let _ = ffi::keyctl!(
             KeyCtlOperation::Describe,
             self.0.as_raw_id() as libc::c_ulong,
             result.as_mut_ptr() as _,
@@ -71,7 +70,7 @@ impl Key {
     /// If a key type does not implement this function, the operation
     /// fails with the error EOPNOTSUPP.
     pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
-        let len = keyctl!(
+        let len = ffi::keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,
             buffer.as_mut().as_mut_ptr() as _,
@@ -88,7 +87,7 @@ impl Key {
     /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
     /// can be positively instantiated with this operation.
     pub fn update<T: AsRef<[u8]>>(&self, update: &T) -> Result<(), KeyError> {
-        _ = keyctl!(
+        _ = ffi::keyctl!(
             KeyCtlOperation::Update,
             self.0.as_raw_id() as libc::c_ulong,
             update.as_ref().as_ptr() as _,
@@ -103,7 +102,7 @@ impl Key {
     /// permissions only only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
     pub fn set_perm(&self, perm: KeyPermissions) -> Result<(), KeyError> {
-        _ = keyctl!(
+        _ = ffi::keyctl!(
             KeyCtlOperation::SetPerm,
             self.0.as_raw_id() as libc::c_ulong,
             perm.bits() as _
@@ -123,7 +122,7 @@ impl Key {
     pub fn chown(&self, uid: Option<u32>, gid: Option<u32>) -> Result<(), KeyError> {
         let uid_opt = uid.unwrap_or(u32::MAX);
         let gid_opt = gid.unwrap_or(u32::MAX);
-        _ = keyctl!(
+        _ = ffi::keyctl!(
             KeyCtlOperation::Chown,
             self.0.as_raw_id() as libc::c_ulong,
             uid_opt as _,
@@ -147,7 +146,7 @@ impl Key {
     /// ations  immediately,  though they are still visible in /proc/keys
     /// (marked with an 'i' flag) until they are actually removed.
     pub fn invalidate(&self) -> Result<(), KeyError> {
-        keyctl!(
+        ffi::keyctl!(
             KeyCtlOperation::Invalidate,
             self.0.as_raw_id() as libc::c_ulong
         )?;

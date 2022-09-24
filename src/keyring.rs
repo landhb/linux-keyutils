@@ -24,7 +24,7 @@ impl KeyRing {
     /// Internally this uses KEYCTL_GET_KEYRING_ID to resolve
     /// a keyrings real ID from the special identifier.
     pub fn from_special_id(id: KeyRingIdentifier, create: bool) -> Result<Self, KeyError> {
-        let id: i32 = crate::keyctl!(
+        let id: i32 = ffi::keyctl!(
             KeyCtlOperation::GetKeyRingId,
             id as libc::c_ulong,
             if create { 1 } else { 0 }
