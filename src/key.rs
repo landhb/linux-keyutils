@@ -79,7 +79,7 @@ impl Key {
     /// The caller must have write permission on the key specified and the key
     /// type must support updating.
     ///
-    /// A  negatively  instantiated key (see the description of `KeyCtl::reject`)
+    /// A negatively instantiated key (see the description of [Key::reject])
     /// can be positively instantiated with this operation.
     pub fn update<T: AsRef<[u8]>>(&self, update: &T) -> Result<(), KeyError> {
         _ = ffi::keyctl!(
@@ -130,7 +130,7 @@ impl Key {
     ///
     /// Specifying the timeout value as 0 clears any existing timeout on the key.
     ///
-    /// The /proc/keys file displays the remaining time until each key will expire.
+    /// The `/proc/keys` file displays the remaining time until each key will expire.
     /// (This is the only method of discovering the timeout on a key.)
     ///
     /// The caller must either have the setattr permission on the key or hold an
@@ -151,19 +151,47 @@ impl Key {
         Ok(())
     }
 
+    /// Revoke this key. Similar to [Key::reject] just without the timeout.
+    ///
+    /// The key is scheduled for garbage collection; it will no longer be findable,
+    /// and will be unavailable for further operations. Further attempts to use the
+    /// key will fail with the error EKEYREVOKED.
+    ///
+    /// The caller must have write or setattr permission on the key.
+    pub fn revoke(&self) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(KeyCtlOperation::Revoke, self.0.as_raw_id() as libc::c_ulong)?;
+        Ok(())
+    }
+
+    /// Mark a key as negatively instantiated and set an expiration timer on the key.
+    ///
+    /// This will prevent others from retrieving the key in further searches. And they
+    /// will receive a `EKEYREJECTED` error when performing the search.
+    ///
+    /// Similar to [Key::revoke] but with a timeout.
+    pub fn reject(&self, seconds: usize) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Reject,
+            self.0.as_raw_id() as libc::c_ulong,
+            seconds as _,
+            libc::EKEYREJECTED as _
+        )?;
+        Ok(())
+    }
+
     /// Mark a key as invalid.
     ///
     /// To invalidate a key, the caller must have search permission on the
     /// key.
     ///
-    /// This operation marks the key as invalid and  schedules  immediate
-    /// garbage  collection.   The  garbage collector removes the invali‐
+    /// This operation marks the key as invalid and schedules immediate
+    /// garbage collection. The garbage collector removes the invali‐
     /// dated key from all keyrings and deletes the key when  its  refer‐
-    /// ence  count  reaches zero.  After this operation, the key will be
+    /// ence count reaches zero. After this operation, the key will be
     /// ignored by all searches, even if it is not yet deleted.
     ///
     /// Keys that are marked invalid become invisible to normal key oper‐
-    /// ations  immediately,  though they are still visible in /proc/keys
+    /// ations  immediately,  though they are still visible in `/proc/keys`
     /// (marked with an 'i' flag) until they are actually removed.
     pub fn invalidate(&self) -> Result<(), KeyError> {
         ffi::keyctl!(
