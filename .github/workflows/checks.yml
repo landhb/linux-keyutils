@@ -41,19 +41,20 @@ jobs:
     - name: Run RustFmt
       run: cargo fmt -- --check
 
-  # Run miri 
-  miri:
-    name: "miri"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: miri
-      - name: Setup Miri
-        run: cargo +nightly miri setup
-      - name: Test with Miri
-        run: cargo +nightly miri test
+  # Run miri (commented out since miri doesn't support the keyctl
+  # syscalls)
+  #miri:
+  #  name: "miri"
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #    - uses: actions-rs/toolchain@v1
+  #      with:
+  #        profile: minimal
+  #        toolchain: nightly
+  #        override: true
+  #        components: miri
+  #    - name: Setup Miri
+  #      run: cargo +nightly miri setup
+  #    - name: Test with Miri
+  #      run: cargo +nightly miri test
