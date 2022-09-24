@@ -40,7 +40,7 @@ additional terms or conditions.
 [rust-version]: #rust-version-policy
 [cargo-badge-lib]: https://img.shields.io/crates/v/linux-keyutils.svg?style=flat-square&label=linux-keyutils
 [cargo-lib]: https://crates.io/crates/linux-keyutils
-[docs-badge-lib]: https://docs.rs/linux-keyutils/badge.svg?style=flat-square
+[docs-badge-lib]: https://img.shields.io/docsrs/linux-keyutils/latest?style=flat-square
 [docs-lib]: https://docs.rs/linux-keyutils
 [codecov]: https://img.shields.io/codecov/c/github/landhb/linux-keyutils?style=flat-square
 [codecov-url]: https://codecov.io/gh/landhb/linux-keyutils
