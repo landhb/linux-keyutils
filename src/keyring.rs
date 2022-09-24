@@ -134,8 +134,9 @@ impl KeyRing {
     /// Clear the contents of (i.e., unlink all keys from) this keyring.
     ///
     /// The caller must have write permission on the keyring.
-    pub fn clear(&self) {
-        todo!()
+    pub fn clear(&self) -> Result<(), KeyError> {
+        _ = ffi::keyctl!(KeyCtlOperation::Clear, self.id.as_raw_id() as libc::c_ulong)?;
+        Ok(())
     }
 }
 
