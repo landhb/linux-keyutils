@@ -4,9 +4,8 @@ use alloc::ffi::CString;
 use core::convert::TryInto;
 use core::ffi::CStr;
 
-/// Rust Interface for KeyRing operations using the kernel
-/// provided keyrings. Used to locate, create, search, add,
-/// and remove keys to & from keyrings.
+/// Interface to perform keyring operations. Used to locate, create,
+/// search, add, and link/unlink keys to & from keyrings.
 #[derive(Debug, Copy, Clone)]
 pub struct KeyRing {
     id: KeySerialId,

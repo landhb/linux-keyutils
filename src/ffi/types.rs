@@ -3,9 +3,7 @@
 use crate::KeyError;
 use core::ffi::CStr;
 
-/// Serial Number for a Key
-///
-/// Returned by the kernel.
+/// Primary kernel identifier for a key or keyring.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct KeySerialId(pub i32);
 
