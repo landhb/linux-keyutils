@@ -1,5 +1,6 @@
 use crate::ffi::{self, KeyCtlOperation};
 use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType};
+use alloc::ffi::CString;
 use core::convert::TryInto;
 use core::ffi::CStr;
 
@@ -72,15 +73,22 @@ impl KeyRing {
     ///
     /// If the key is found, its ID is returned as the function result.
     pub fn search<D: AsRef<str> + ?Sized>(&self, description: &D) -> Result<Key, KeyError> {
+        // The provided description must be properly null terminated for the kernel
+        let description =
+            CString::new(description.as_ref()).or(Err(KeyError::InvalidDescription))?;
+
+        // Perform the raw syscall and validate that the result is a valid ID
         let id: KeySerialId = ffi::keyctl!(
             KeyCtlOperation::Search,
             self.id.as_raw_id() as libc::c_ulong,
             Into::<&'static CStr>::into(KeyType::User).as_ptr() as _,
-            description.as_ref().as_ptr() as _,
+            description.as_ptr() as _,
             0
         )?
         .try_into()
         .or(Err(KeyError::InvalidIdentifier))?;
+
+        // Construct a key object from the ID
         Ok(Key::from_id(id))
     }
 
