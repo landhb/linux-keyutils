@@ -1,6 +1,8 @@
 # linux-keyutils
 [![cargo-badge-lib][]][cargo-lib] [![docs-badge-lib][]][docs-lib] [![license-badge][]][license] [![rust-version-badge][]][rust-version] [![build][]][build-url] [![codecov][]][codecov-url]
 
+Rust interface to the Linux key-management facility. Provides a safe interface around the raw system calls allowing user-space programs to perform key manipulation.
+
 ## Basic Usage
 
 To use `linux-keyutils`, first add this to your `Cargo.toml`:
@@ -20,11 +22,10 @@ For more please view the full [documentation](https://docs.rs/linux-keyutils).
 
 ## License
 
-Licensed under either of
+Licensed under either of the following at your discretion:
+
  * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
  * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
 
 ### Contribution
 
