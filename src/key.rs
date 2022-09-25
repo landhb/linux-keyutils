@@ -155,7 +155,7 @@ impl Key {
     ///
     /// The key is scheduled for garbage collection; it will no longer be findable,
     /// and will be unavailable for further operations. Further attempts to use the
-    /// key will fail with the error EKEYREVOKED.
+    /// key will fail with the error `EKEYREVOKED`.
     ///
     /// The caller must have write or setattr permission on the key.
     pub fn revoke(&self) -> Result<(), KeyError> {

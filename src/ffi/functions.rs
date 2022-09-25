@@ -22,10 +22,16 @@ pub(crate) fn add_key(
     ktype: KeyType,
     keyring: libc::c_ulong,
     description: &str,
-    payload: &[u8],
+    payload: Option<&[u8]>,
 ) -> Result<KeySerialId, KeyError> {
     // Perform conversion into a c string
     let description = CString::new(description).or(Err(KeyError::InvalidDescription))?;
+
+    // When creating keyrings the payload will be NULL
+    let (payload, plen) = match payload {
+        Some(p) => (p.as_ptr(), p.len()),
+        None => (core::ptr::null(), 0),
+    };
 
     // Perform the actual system call
     let res = unsafe {
@@ -33,8 +39,8 @@ pub(crate) fn add_key(
             libc::SYS_add_key,
             Into::<&'static CStr>::into(ktype).as_ptr(),
             description.as_ptr(),
-            payload.as_ptr(),
-            payload.len() as libc::size_t,
+            payload,
+            plen as libc::size_t,
             keyring as u32,
         )
     };

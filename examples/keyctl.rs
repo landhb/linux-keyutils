@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Obtain the default User keyring for the current UID/user
     // See [KeyRingIdentifier] and `man 2 keyctl` for more information on default
     // keyrings for processes.
-    let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false)?;
+    let ring = KeyRing::get_persistent(KeyRingIdentifier::User)?;
 
     _ = match args.subcommand {
         Command::Create {
