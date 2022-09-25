@@ -12,11 +12,6 @@ pub struct KeyRing {
 }
 
 impl KeyRing {
-    /// Create a new keyring with the given description
-    pub fn create<D: AsRef<str> + ?Sized>(_description: &D) -> Result<Self, KeyError> {
-        todo!()
-    }
-
     /// Obtain a KeyRing from its special identifier.
     ///
     /// If the create argument is true, then this method will attempt
@@ -30,6 +25,36 @@ impl KeyRing {
             KeyCtlOperation::GetKeyRingId,
             id as libc::c_ulong,
             if create { 1 } else { 0 }
+        )?
+        .try_into()
+        .or(Err(KeyError::InvalidIdentifier))?;
+        Ok(Self { id })
+    }
+
+    /// Get the persistent keyring  (persistent-keyring(7)) of the current user
+    /// and link it to a specified keyring.
+    ///
+    /// If the call is successful, a link to the persistent keyring is added to the
+    /// keyring specified in the `link_with` argument.
+    ///
+    /// The caller must have write permission on the keyring.
+    ///
+    /// The persistent keyring will be created by the kernel if it does not yet exist.
+    ///
+    /// Each time the [KeyRing::get_persistent] operation is performed, the persistent
+    /// keyring will have its expiration timeout reset to the value in:
+    ///
+    ///    `/proc/sys/kernel/keys/persistent_keyring_expiry`
+    ///
+    /// Should the timeout be reached, the persistent keyring will be removed and
+    /// everything it pins can then be garbage collected.
+    ///
+    /// Persistent keyrings were added to Linux in kernel version 3.13.
+    pub fn get_persistent(link_with: KeyRingIdentifier) -> Result<Self, KeyError> {
+        let id: KeySerialId = ffi::keyctl!(
+            KeyCtlOperation::GetPersistent,
+            u32::MAX as _,
+            link_with as libc::c_ulong
         )?
         .try_into()
         .or(Err(KeyError::InvalidIdentifier))?;
@@ -53,7 +78,7 @@ impl KeyRing {
             KeyType::User,
             self.id.as_raw_id() as libc::c_ulong,
             description.as_ref(),
-            secret.as_ref(),
+            Some(secret.as_ref()),
         )?;
         Ok(Key::from_id(id))
     }
@@ -152,6 +177,16 @@ mod test {
         // Test that a keyring that should already exist is returned
         let ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
         assert!(ring.id.as_raw_id() > 0);
+    }
+
+    #[test]
+    fn tet_get_persistent() {
+        // Test that a keyring that should already exist is returned
+        let user_ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
+        assert!(user_ring.id.as_raw_id() > 0);
+
+        let user_perm_ring = KeyRing::get_persistent(KeyRingIdentifier::User).unwrap();
+        assert_ne!(user_ring.id.as_raw_id(), user_perm_ring.id.as_raw_id());
     }
 
     #[test]

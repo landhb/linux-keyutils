@@ -54,7 +54,7 @@
 //! }
 //! ```
 #![cfg_attr(not(feature = "std"), no_std)]
-//#![deny(warnings)]
+#![deny(warnings)]
 
 // no_std CStr/CString support stabilized in Rust 1.64.0
 // CString requires alloc however
