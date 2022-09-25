@@ -34,10 +34,6 @@ impl KeyRing {
     /// Get the persistent keyring  (persistent-keyring(7)) of the current user
     /// and link it to a specified keyring.
     ///
-    /// The  caller must have the CAP_SETUID capability in its user namespace in
-    /// order to fetch the persistent keyring for a user ID that does not match
-    /// either the real or effective user ID of the caller.
-    ///
     /// If the call is successful, a link to the persistent keyring is added to the
     /// keyring specified in the `link_with` argument.
     ///
@@ -45,7 +41,7 @@ impl KeyRing {
     ///
     /// The persistent keyring will be created by the kernel if it does not yet exist.
     ///
-    /// Each time the KEYCTL_GET_PERSISTENT operation is performed, the persistent
+    /// Each time the [KeyRing::get_persistent] operation is performed, the persistent
     /// keyring will have its expiration timeout reset to the value in:
     ///
     ///    `/proc/sys/kernel/keys/persistent_keyring_expiry`
