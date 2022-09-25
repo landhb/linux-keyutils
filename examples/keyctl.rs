@@ -62,6 +62,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ring = KeyRing::get_persistent(KeyRingIdentifier::User)?;
 
     _ = match args.subcommand {
+        // Add a new key to the keyring
         Command::Create {
             description,
             secret,
@@ -69,12 +70,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             let key = ring.add_key(&description, &secret)?;
             println!("Created key with ID {:?}", key.get_id());
         }
+        // Search for an existing key by description and read the secret
+        // data from the keyring
         Command::Read { description } => {
             let key = ring.search(&description)?;
             let mut buf = Zeroizing::new([0u8; 2048]);
             let len = key.read(&mut buf)?;
             println!("Secret {:?}", std::str::from_utf8(&buf[..len])?);
         }
+        // Search for an existing key by description and attempt to
+        // change ownership of the key
         Command::Chown {
             description,
             uid,
@@ -83,6 +88,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             let key = ring.search(&description)?;
             key.chown(uid, gid)?;
         }
+        // Search for an existing key by description and attempt to
+        // change permissions of the key
         Command::Chmod { description } => {
             let key = ring.search(&description)?;
             let perms = KeyPermissionsBuilder::builder()
@@ -90,6 +97,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .build();
             key.set_perm(perms)?;
         }
+        // Search for an existing key by description and attempt to
+        // invalidate they key
         Command::Invalidate { description } => {
             let key = ring.search(&description)?;
             key.invalidate()?;
