@@ -180,6 +180,16 @@ mod test {
     }
 
     #[test]
+    fn tet_get_persistent() {
+        // Test that a keyring that should already exist is returned
+        let user_ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
+        assert!(user_ring.id.as_raw_id() > 0);
+
+        let user_perm_ring = KeyRing::get_persistent(KeyRingIdentifier::User).unwrap();
+        assert_ne!(user_ring.id.as_raw_id(), user_perm_ring.id.as_raw_id());
+    }
+
+    #[test]
     fn test_search_existing_key() {
         // Test that a keyring that normally doesn't exist by default is
         // created when called.
