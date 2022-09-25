@@ -3,8 +3,8 @@
 //!
 //! Demo code for the linux_keyutils crate.
 use clap::Parser;
-use linux_keyutils::{Key, KeyRing, KeyRingIdentifier, KeySerialId};
 use linux_keyutils::{KeyPermissionsBuilder, Permission};
+use linux_keyutils::{KeyRing, KeyRingIdentifier};
 use std::error::Error;
 use zeroize::Zeroizing;
 
@@ -28,12 +28,12 @@ enum Command {
     /// Read the secret from a key
     Read {
         #[clap(short, long)]
-        id: i32,
+        description: String,
     },
     /// Change ownership of a key
     Chown {
         #[clap(short, long)]
-        id: i32,
+        description: String,
 
         #[clap(short, long)]
         uid: Option<u32>,
@@ -44,12 +44,12 @@ enum Command {
     /// Change permissions of a key
     Chmod {
         #[clap(short, long)]
-        id: i32,
+        description: String,
     },
     /// Invalidate a key
     Invalidate {
         #[clap(short, long)]
-        id: i32,
+        description: String,
     },
 }
 
@@ -69,25 +69,29 @@ fn main() -> Result<(), Box<dyn Error>> {
             let key = ring.add_key(&description, &secret)?;
             println!("Created key with ID {:?}", key.get_id());
         }
-        Command::Read { id } => {
-            let key = Key::from_id(KeySerialId(id));
+        Command::Read { description } => {
+            let key = ring.search(&description)?;
             let mut buf = Zeroizing::new([0u8; 2048]);
             let len = key.read(&mut buf)?;
             println!("Secret {:?}", std::str::from_utf8(&buf[..len])?);
         }
-        Command::Chown { id, uid, gid } => {
-            let key = Key::from_id(KeySerialId(id));
+        Command::Chown {
+            description,
+            uid,
+            gid,
+        } => {
+            let key = ring.search(&description)?;
             key.chown(uid, gid)?;
         }
-        Command::Chmod { id } => {
-            let key = Key::from_id(KeySerialId(id));
+        Command::Chmod { description } => {
+            let key = ring.search(&description)?;
             let perms = KeyPermissionsBuilder::builder()
                 .user(Permission::ALL)
                 .build();
             key.set_perm(perms)?;
         }
-        Command::Invalidate { id } => {
-            let key = Key::from_id(KeySerialId(id));
+        Command::Invalidate { description } => {
+            let key = ring.search(&description)?;
             key.invalidate()?;
         }
     };
