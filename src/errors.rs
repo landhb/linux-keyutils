@@ -48,6 +48,9 @@ pub enum KeyError {
     /// An invalid identifier was returned
     InvalidIdentifier,
 
+    /// Operation not supported
+    OperationNotSupported,
+
     /// Unknown - catch all, return this instead of panicing
     Unknown(i32),
 }
@@ -76,6 +79,7 @@ impl KeyError {
             libc::EKEYREJECTED => KeyError::KeyRejected,
             libc::ENOMEM => KeyError::OutOfMemory,
             libc::ENOKEY => KeyError::KeyDoesNotExist,
+            libc::ENOTSUP => KeyError::OperationNotSupported,
 
             // Unknown, provide error code for debugging
             x => KeyError::Unknown(x),
