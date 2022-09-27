@@ -5,6 +5,7 @@ use core::ffi::CStr;
 
 /// Primary kernel identifier for a key or keyring.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(transparent)]
 pub struct KeySerialId(pub i32);
 
 /// Pre-defined key types the kernel understands. See `man 7 keyrings`.

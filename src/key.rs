@@ -4,7 +4,7 @@ use alloc::string::String;
 use core::fmt;
 
 /// A key corresponding to a specific real ID.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Key(KeySerialId);
 
 impl fmt::Display for Key {
@@ -57,14 +57,7 @@ impl Key {
     /// the caller search permission when searched for from the process
     /// keyrings (i.e., the key is possessed).
     pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
-        // TODO: alternate key types? Currenlty we only support KeyType::User
-        //
-        // The returned data will be processed for presentation according to
-        // the key type. For example, a keyring will  return  an  array  of
-        // key_serial_t entries  representing  the IDs of all the keys that
-        // are linked to it. The user key type will return its data as is.
-        // If a key type does not implement this function, the operation
-        // fails with the error EOPNOTSUPP.
+        // TODO: alternate key types? Currenlty we don't support KeyType::BigKey
         let len = ffi::keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,
