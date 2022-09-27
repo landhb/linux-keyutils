@@ -123,7 +123,7 @@ impl KeyRing {
     /// The keyring must either grant the caller read permission, or grant
     /// the caller search permission.
     pub fn get_linked_keys(&self, max: usize) -> Result<Vec<Key>, KeyError> {
-        // Allocate a capacity of 200 keys
+        // Allocate the requested capacity
         let mut buffer = Vec::<KeySerialId>::with_capacity(max);
 
         // Perform the read
