@@ -4,7 +4,7 @@ use alloc::string::String;
 use core::fmt;
 
 /// A key corresponding to a specific real ID.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Key(KeySerialId);
 
 impl fmt::Display for Key {

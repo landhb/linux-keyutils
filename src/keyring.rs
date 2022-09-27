@@ -1,6 +1,7 @@
 use crate::ffi::{self, KeyCtlOperation};
 use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType};
 use alloc::ffi::CString;
+use alloc::vec::Vec;
 use core::convert::TryInto;
 use core::ffi::CStr;
 
@@ -114,6 +115,34 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
+    /// Obtain a list of the keys linked to this keyring.
+    ///
+    /// This method allocates, but you can provide a maximum number of entries
+    /// to read. Each returned entry is 4 bytes.
+    ///
+    /// The keyring must either grant the caller read permission, or grant
+    /// the caller search permission.
+    pub fn get_linked_keys(&self, max: usize) -> Result<Vec<Key>, KeyError> {
+        // Allocate a capacity of 200 keys
+        let mut buffer = Vec::<KeySerialId>::with_capacity(max);
+
+        // Perform the read
+        let len = ffi::keyctl!(
+            KeyCtlOperation::Read,
+            self.id.as_raw_id() as libc::c_ulong,
+            buffer.as_mut_ptr() as _,
+            buffer.capacity() as _
+        )? as usize;
+
+        // Set the size of the results
+        unsafe {
+            buffer.set_len(len / core::mem::size_of::<KeySerialId>());
+        }
+
+        // Remap the results to complete keys
+        Ok(buffer.iter().map(|&id| Key::from_id(id)).collect())
+    }
+
     /// Create a link from this keyring to a key.
     ///
     /// If a key with the same type and description is already linked in the keyring,
@@ -180,7 +209,7 @@ mod test {
     }
 
     #[test]
-    fn tet_get_persistent() {
+    fn test_get_persistent() {
         // Test that a keyring that should already exist is returned
         let user_ring = KeyRing::from_special_id(KeyRingIdentifier::User, false).unwrap();
         assert!(user_ring.id.as_raw_id() > 0);
@@ -227,5 +256,25 @@ mod test {
         // Assert that the ID is the same
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), KeyError::KeyDoesNotExist);
+    }
+
+    #[test]
+    fn test_read_keys() {
+        // Test that a keyring that should already exist is returned
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+        assert!(ring.id.as_raw_id() > 0);
+
+        // Add the key
+        let key = ring.add_key("test_read_key", b"test").unwrap();
+
+        // Obtain a list of the linked keys
+        let keys = ring.get_linked_keys(200).unwrap();
+
+        // Assert that the key is in the ring
+        assert!(keys.len() > 0);
+        assert!(keys.contains(&key));
+
+        // Invalidate the key
+        key.invalidate().unwrap()
     }
 }
