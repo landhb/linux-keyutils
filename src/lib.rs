@@ -54,11 +54,27 @@
 //! }
 //! ```
 #![cfg_attr(not(feature = "std"), no_std)]
-#![deny(warnings)]
+//#![deny(warnings)]
 
-// no_std CStr/CString support stabilized in Rust 1.64.0
 // CString requires alloc however
 extern crate alloc;
+
+// Use the std-lib when available
+#[cfg(feature = "std")]
+mod utils {
+    pub use std::ffi::{CStr, CString};
+    pub use std::string::String;
+    pub use std::vec::Vec;
+}
+
+// #![no_std] CStr/CString support stabilized in Rust 1.64.0
+#[cfg(not(feature = "std"))]
+mod utils {
+    pub use alloc::ffi::CString;
+    pub use alloc::string::String;
+    pub use alloc::vec::Vec;
+    pub use core::ffi::CStr;
+}
 
 // Internal FFI for raw syscalls
 mod ffi;

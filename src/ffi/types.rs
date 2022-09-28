@@ -1,7 +1,7 @@
 //! Definitions ported from the C keyutils library
 //!
+use crate::utils::CStr;
 use crate::KeyError;
-use core::ffi::CStr;
 
 /// Primary kernel identifier for a key or keyring.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -9,6 +9,7 @@ use core::ffi::CStr;
 pub struct KeySerialId(pub i32);
 
 /// Pre-defined key types the kernel understands. See `man 7 keyrings`.
+#[derive(Debug, Copy, Clone)]
 pub enum KeyType {
     /// Keyrings  are  special  key  types that may contain links to sequences of other
     /// keys of any type.
@@ -153,6 +154,22 @@ impl From<KeyType> for &'static CStr {
                 KeyType::BigKey => CStr::from_bytes_with_nul_unchecked(b"big_key\0"),
             }
         }
+    }
+}
+
+/// Perform the conversion here so that invalid KeyType strings cannot be used.
+/// Using Rust's type system to ensure only valid strings are provided to the syscall.
+impl TryFrom<&str> for KeyType {
+    type Error = KeyError;
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        let val = match s {
+            "keyring" => KeyType::KeyRing,
+            "user" => KeyType::User,
+            "logon" => KeyType::Logon,
+            "big_key" => KeyType::BigKey,
+            _ => return Err(KeyError::InvalidIdentifier),
+        };
+        Ok(val)
     }
 }
 

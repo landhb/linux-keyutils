@@ -1,16 +1,26 @@
 use crate::ffi::{self, KeyCtlOperation, KeySerialId};
-use crate::{KeyError, KeyPermissions};
-use alloc::string::String;
+use crate::utils::String;
+use crate::{KeyError, KeyPermissions, KeyType};
 use core::fmt;
 
 /// A key corresponding to a specific real ID.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Key(KeySerialId);
 
+/// An entry description
+#[derive(Debug, Clone)]
+pub struct Description {
+    ktype: KeyType,
+    uid: u16,
+    gid: u16,
+    perm: KeyPermissions,
+    description: String,
+}
+
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let description = self.description().map_err(|_| fmt::Error::default())?;
-        write!(f, "Key({})", description)
+        write!(f, "Key({})", description.description)
     }
 }
 
@@ -36,19 +46,44 @@ impl Key {
     ///
     /// In the above, type and description are strings, uid and gid are
     /// decimal strings, and perm is a hexadecimal permissions mask.
-    pub fn description(&self) -> Result<String, KeyError> {
+    pub fn description(&self) -> Result<Description, KeyError> {
         let mut result = alloc::vec![0u8; 512];
 
         // Obtain the description from the kernel
-        let _ = ffi::keyctl!(
+        let len = ffi::keyctl!(
             KeyCtlOperation::Describe,
             self.0.as_raw_id() as libc::c_ulong,
             result.as_mut_ptr() as _,
             result.len() as _
-        )?;
+        )? as usize;
 
         // Construct the string from the resulting data ensuring utf8 compat
-        String::from_utf8(result).or(Err(KeyError::InvalidDescription))
+        let s = core::str::from_utf8(&result[..len]).or(Err(KeyError::InvalidDescription))?;
+        println!("{:?}", s);
+        // Begin parsing
+        let mut iter = s.split(';');
+
+        // Create the description
+        Ok(Description {
+            ktype: iter
+                .next()
+                .and_then(|v| v.try_into().ok())
+                .ok_or(KeyError::InvalidDescription)?,
+            uid: iter
+                .next()
+                .and_then(|v| v.parse().ok())
+                .ok_or(KeyError::InvalidDescription)?,
+            gid: iter
+                .next()
+                .and_then(|v| v.parse().ok())
+                .ok_or(KeyError::InvalidDescription)?,
+            perm: KeyPermissions::from_u32(
+                iter.next()
+                    .and_then(|v| u32::from_str_radix(v, 16).ok())
+                    .ok_or(KeyError::InvalidDescription)?,
+            ),
+            description: iter.next().ok_or(KeyError::InvalidDescription)?.to_string(),
+        })
     }
 
     /// Read the payload data of a key.

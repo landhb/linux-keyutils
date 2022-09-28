@@ -13,6 +13,7 @@ use bitflags::bitflags;
 /// perms.set_user_perms(Permission::ALL);
 /// perms.set_group_perms(Permission::VIEW);
 /// ```
+#[derive(Debug, Copy, Clone)]
 pub struct KeyPermissions(u32);
 
 /// Construct key permissions with the builder pattern.
@@ -27,6 +28,7 @@ pub struct KeyPermissions(u32);
 ///             .group(Permission::VIEW)
 ///             .build();
 /// ```
+#[derive(Debug, Copy, Clone)]
 pub struct KeyPermissionsBuilder(KeyPermissions);
 
 bitflags! {

@@ -1,13 +1,11 @@
 use crate::ffi::{self, KeyCtlOperation};
+use crate::utils::{CStr, CString, Vec};
 use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType};
-use alloc::ffi::CString;
-use alloc::vec::Vec;
 use core::convert::TryInto;
-use core::ffi::CStr;
 
 /// Interface to perform keyring operations. Used to locate, create,
 /// search, add, and link/unlink keys to & from keyrings.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct KeyRing {
     id: KeySerialId,
 }
@@ -215,7 +213,7 @@ mod test {
         assert!(user_ring.id.as_raw_id() > 0);
 
         let user_perm_ring = KeyRing::get_persistent(KeyRingIdentifier::User).unwrap();
-        assert_ne!(user_ring.id.as_raw_id(), user_perm_ring.id.as_raw_id());
+        assert_ne!(user_ring, user_perm_ring);
     }
 
     #[test]
