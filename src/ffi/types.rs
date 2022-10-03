@@ -9,7 +9,7 @@ use crate::KeyError;
 pub struct KeySerialId(pub i32);
 
 /// Pre-defined key types the kernel understands. See `man 7 keyrings`.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum KeyType {
     /// Keyrings  are  special  key  types that may contain links to sequences of other
     /// keys of any type.

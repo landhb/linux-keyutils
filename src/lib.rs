@@ -94,6 +94,10 @@ pub use keyring::KeyRing;
 mod key;
 pub use key::Key;
 
+// Information about nodes (either keys or keyrings)
+mod info;
+pub use info::KeyInfo;
+
 // Expose KeyPermissions API
 mod permissions;
 pub use permissions::{KeyPermissions, KeyPermissionsBuilder, Permission};
