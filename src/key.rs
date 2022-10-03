@@ -191,11 +191,12 @@ mod tests {
         // Create the key
         let key = ring.add_key("my-info-key", secret).unwrap();
 
-        let euid = unsafe { libc::geteuid() };
+        // Obtain and verify the info
         let info = key.info().unwrap();
-
         assert_eq!(info.get_type(), KeyType::User);
-        assert_eq!(info.get_uid(), euid);
+        assert_eq!(info.get_uid(), unsafe { libc::geteuid() });
+        assert_eq!(info.get_gid(), unsafe { libc::getegid() });
+        assert_eq!(info.get_description(), "my-info-key");
 
         // Cleanup
         key.invalidate().unwrap()

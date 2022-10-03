@@ -1,5 +1,5 @@
 use crate::ffi::{self, KeyCtlOperation, KeySerialId};
-use crate::utils::String;
+use crate::utils::{CStr, String};
 use crate::{KeyError, KeyPermissions, KeyType};
 use alloc::string::ToString;
 use core::str::{self, FromStr};
@@ -82,8 +82,11 @@ impl KeyInfo {
             result.len() as _
         )? as usize;
 
+        // Construct the C-string
+        let cs = CStr::from_bytes_with_nul(&result[..len]).or(Err(KeyError::InvalidDescription))?;
+
         // Construct the string from the resulting data ensuring utf8 compat
-        let s = str::from_utf8(&result[..len]).or(Err(KeyError::InvalidDescription))?;
+        let s = cs.to_str().or(Err(KeyError::InvalidDescription))?;
         KeyInfo::from_str(s)
     }
 
