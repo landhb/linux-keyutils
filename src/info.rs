@@ -82,7 +82,7 @@ impl KeyInfo {
             result.len() as _
         )? as usize;
 
-        // Construct the C-string
+        // Construct the CStr first to remove the null terminator
         let cs = CStr::from_bytes_with_nul(&result[..len]).or(Err(KeyError::InvalidDescription))?;
 
         // Construct the string from the resulting data ensuring utf8 compat
