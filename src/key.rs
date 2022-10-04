@@ -1,5 +1,5 @@
 use crate::ffi::{self, KeyCtlOperation, KeySerialId};
-use crate::{KeyError, KeyInfo, KeyPermissions};
+use crate::{KeyError, KeyPermissions, Metadata};
 use core::fmt;
 
 /// A key corresponding to a specific real ID.
@@ -8,7 +8,7 @@ pub struct Key(KeySerialId);
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let info = self.info().map_err(|_| fmt::Error::default())?;
+        let info = self.metadata().map_err(|_| fmt::Error::default())?;
         write!(f, "Key({:?})", info)
     }
 }
@@ -27,8 +27,8 @@ impl Key {
     /// Obtain information describing the attributes of this key.
     ///
     /// The key must grant the caller view permission.
-    pub fn info(&self) -> Result<KeyInfo, KeyError> {
-        KeyInfo::from_id(self.0)
+    pub fn metadata(&self) -> Result<Metadata, KeyError> {
+        Metadata::from_id(self.0)
     }
 
     /// Read the payload data of a key.
@@ -182,7 +182,7 @@ mod tests {
     use zeroize::Zeroizing;
 
     #[test]
-    fn test_info() {
+    fn test_metadata() {
         let secret = "Test Data";
 
         // Obtain the default User keyring
@@ -192,7 +192,7 @@ mod tests {
         let key = ring.add_key("my-info-key", secret).unwrap();
 
         // Obtain and verify the info
-        let info = key.info().unwrap();
+        let info = key.metadata().unwrap();
         assert_eq!(info.get_type(), KeyType::User);
         assert_eq!(info.get_uid(), unsafe { libc::geteuid() });
         assert_eq!(info.get_gid(), unsafe { libc::getegid() });

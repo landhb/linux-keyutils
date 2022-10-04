@@ -6,7 +6,7 @@ use core::str::{self, FromStr};
 
 /// Information about the given node/entry
 #[derive(Debug, Clone)]
-pub struct KeyInfo {
+pub struct Metadata {
     ktype: KeyType,
     uid: u32,
     gid: u32,
@@ -14,7 +14,7 @@ pub struct KeyInfo {
     description: String,
 }
 
-impl FromStr for KeyInfo {
+impl FromStr for Metadata {
     type Err = KeyError;
 
     /// The returned string contains the following information about
@@ -68,7 +68,7 @@ impl FromStr for KeyInfo {
     }
 }
 
-impl KeyInfo {
+impl Metadata {
     /// Internal method to derive information from an
     /// arbitrary node based on ID alone.
     pub(crate) fn from_id(id: KeySerialId) -> Result<Self, KeyError> {
@@ -87,7 +87,7 @@ impl KeyInfo {
 
         // Construct the string from the resulting data ensuring utf8 compat
         let s = cs.to_str().or(Err(KeyError::InvalidDescription))?;
-        KeyInfo::from_str(s)
+        Self::from_str(s)
     }
 
     /// The type of this entry

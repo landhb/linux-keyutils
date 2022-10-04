@@ -1,6 +1,6 @@
 use crate::ffi::{self, KeyCtlOperation};
 use crate::utils::{CStr, CString, Vec};
-use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType};
+use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType, LinkNode, Metadata};
 use core::convert::TryInto;
 
 /// Interface to perform keyring operations. Used to locate, create,
@@ -11,6 +11,11 @@ pub struct KeyRing {
 }
 
 impl KeyRing {
+    /// Initialize a new [Key] object from the provided ID
+    pub(crate) fn from_id(id: KeySerialId) -> Self {
+        Self { id }
+    }
+
     /// Obtain a KeyRing from its special identifier.
     ///
     /// If the create argument is true, then this method will attempt
@@ -58,6 +63,13 @@ impl KeyRing {
         .try_into()
         .or(Err(KeyError::InvalidIdentifier))?;
         Ok(Self { id })
+    }
+
+    /// Obtain information describing the attributes of this keyring.
+    ///
+    /// The keyring must grant the caller view permission.
+    pub fn metadata(&self) -> Result<Metadata, KeyError> {
+        Metadata::from_id(self.id)
     }
 
     /// Creates or updates a key of the given type and description, instantiates
@@ -113,14 +125,14 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
-    /// Obtain a list of the keys linked to this keyring.
+    /// Obtain a list of the keys/keyrings linked to this keyring.
     ///
     /// This method allocates, but you can provide a maximum number of entries
     /// to read. Each returned entry is 4 bytes.
     ///
     /// The keyring must either grant the caller read permission, or grant
     /// the caller search permission.
-    pub fn get_linked_keys(&self, max: usize) -> Result<Vec<Key>, KeyError> {
+    pub fn get_linked_items(&self, max: usize) -> Result<Vec<LinkNode>, KeyError> {
         // Allocate the requested capacity
         let mut buffer = Vec::<KeySerialId>::with_capacity(max);
 
@@ -138,7 +150,10 @@ impl KeyRing {
         }
 
         // Remap the results to complete keys
-        Ok(buffer.iter().map(|&id| Key::from_id(id)).collect())
+        Ok(buffer
+            .iter()
+            .filter_map(|&id| LinkNode::from_id(id).ok())
+            .collect())
     }
 
     /// Create a link from this keyring to a key.
@@ -217,6 +232,21 @@ mod test {
     }
 
     #[test]
+    fn test_metadata() {
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Thread, true).unwrap();
+        assert!(ring.id.as_raw_id() > 0);
+
+        // Obtain and verify the info
+        let info = ring.metadata().unwrap();
+        assert_eq!(info.get_type(), KeyType::KeyRing);
+        assert_eq!(info.get_uid(), unsafe { libc::geteuid() });
+        assert_eq!(info.get_gid(), unsafe { libc::getegid() });
+        assert_eq!(info.get_description(), "_tid");
+    }
+
+    #[test]
     fn test_search_existing_key() {
         // Test that a keyring that normally doesn't exist by default is
         // created when called.
@@ -257,7 +287,7 @@ mod test {
     }
 
     #[test]
-    fn test_read_keys() {
+    fn test_get_linked_items() {
         // Test that a keyring that should already exist is returned
         let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
         assert!(ring.id.as_raw_id() > 0);
@@ -266,11 +296,11 @@ mod test {
         let key = ring.add_key("test_read_key", b"test").unwrap();
 
         // Obtain a list of the linked keys
-        let keys = ring.get_linked_keys(200).unwrap();
+        let items = ring.get_linked_items(200).unwrap();
 
         // Assert that the key is in the ring
-        assert!(keys.len() > 0);
-        assert!(keys.contains(&key));
+        assert!(items.len() > 0);
+        assert!(items.iter().any(|v| v == key));
 
         // Invalidate the key
         key.invalidate().unwrap()

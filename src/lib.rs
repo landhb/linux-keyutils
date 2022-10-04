@@ -95,8 +95,12 @@ mod key;
 pub use key::Key;
 
 // Information about nodes (either keys or keyrings)
-mod info;
-pub use info::KeyInfo;
+mod metadata;
+pub use metadata::Metadata;
+
+// Nodes in a ring/tree
+mod links;
+pub use links::LinkNode;
 
 // Expose KeyPermissions API
 mod permissions;
