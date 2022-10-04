@@ -23,38 +23,24 @@ impl LinkNode {
 
 impl PartialEq<Key> for LinkNode {
     fn eq(&self, other: &Key) -> bool {
-        match self {
-            Self::KeyRing(_) => false,
-            Self::Key(x) if x == other => true,
-            _ => false,
-        }
+        matches!(self, LinkNode::Key(x) if x == other)
     }
 }
 
 impl PartialEq<Key> for &LinkNode {
     fn eq(&self, other: &Key) -> bool {
-        match &self {
-            LinkNode::KeyRing(_) => false,
-            LinkNode::Key(x) if x == other => true,
-            _ => false,
-        }
+        matches!(self, LinkNode::Key(x) if x == other)
     }
 }
 
 impl PartialEq<KeyRing> for LinkNode {
     fn eq(&self, other: &KeyRing) -> bool {
-        match self {
-            LinkNode::KeyRing(x) if x == other => true,
-            _ => false,
-        }
+        matches!(self, LinkNode::KeyRing(x) if x == other)
     }
 }
 
 impl PartialEq<KeyRing> for &LinkNode {
     fn eq(&self, other: &KeyRing) -> bool {
-        match &self {
-            LinkNode::KeyRing(x) if x == other => true,
-            _ => false,
-        }
+        matches!(self, LinkNode::KeyRing(x) if x == other)
     }
 }
