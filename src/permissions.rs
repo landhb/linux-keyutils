@@ -2,7 +2,7 @@
 //! permissions defined in keyutils.h
 use bitflags::bitflags;
 
-/// Construct key permissions
+/// Construct key permissions for use with [Key::set_perm]
 ///
 /// Usage:
 ///
@@ -33,6 +33,7 @@ pub struct KeyPermissionsBuilder(KeyPermissions);
 
 bitflags! {
     /// Pre-defined bit-flags to construct permissions easily.
+    #[repr(transparent)]
     pub struct Permission: u8 {
         /// Allows viewing a key's attributes
         const VIEW = 0x1;

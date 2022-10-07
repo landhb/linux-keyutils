@@ -3,6 +3,32 @@ use crate::{KeyError, KeyPermissions, Metadata};
 use core::fmt;
 
 /// A key corresponding to a specific real ID.
+///
+/// Generally you will either create or obtain a Key via the [KeyRing] interface.
+/// Since keys must be linked with a keyring to be valid.
+///
+/// For example:
+///
+/// ```
+/// use linux_keyutils::{Key, KeyRing, KeyRingIdentifier, KeyError};
+/// use zeroize::Zeroize;
+///
+/// // Name of my program's key
+/// const KEYNAME: &'static str = "my-process-key";
+///
+/// // Locate the key in the process keyring and update the secret
+/// fn update_secret<T: AsRef<[u8]> + Zeroize>(data: &T) -> Result<(), KeyError> {
+///     // Get the current process keyring
+///     let ring = KeyRing::from_special_id(KeyRingIdentifier::Process, false)?;
+///
+///     // Locate the key we previously created
+///     let key = ring.search(KEYNAME)?;
+///
+///     // Change the data it contains
+///     key.update(data)?;
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Key(KeySerialId);
 

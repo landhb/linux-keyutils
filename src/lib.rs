@@ -100,7 +100,7 @@ pub use metadata::Metadata;
 
 // Nodes in a ring/tree
 mod links;
-pub use links::LinkNode;
+pub use links::{LinkNode, Links};
 
 // Expose KeyPermissions API
 mod permissions;

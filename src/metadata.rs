@@ -4,7 +4,8 @@ use crate::{KeyError, KeyPermissions, KeyType};
 use alloc::string::ToString;
 use core::str::{self, FromStr};
 
-/// Information about the given node/entry
+/// Information about the given node/entry.
+/// Returned by [Key::metadata] or [KeyRing::metadata]
 #[derive(Debug, Clone)]
 pub struct Metadata {
     ktype: KeyType,
@@ -22,7 +23,7 @@ impl FromStr for Metadata {
     ///
     /// `type;uid;gid;perm;description`
     ///
-    /// And is then parsed into a valid [KeyInfo] struct.
+    /// And is then parsed into a valid [Metadata] struct.
     ///
     /// In the above, type and description are strings, uid and gid are
     /// decimal strings, and perm is a hexadecimal permissions mask.

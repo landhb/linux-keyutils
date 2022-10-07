@@ -1,6 +1,6 @@
 use crate::ffi::{self, KeyCtlOperation};
 use crate::utils::{CStr, CString, Vec};
-use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType, LinkNode, Metadata};
+use crate::{Key, KeyError, KeyRingIdentifier, KeySerialId, KeyType, LinkNode, Links, Metadata};
 use core::convert::TryInto;
 
 /// Interface to perform keyring operations. Used to locate, create,
@@ -132,7 +132,7 @@ impl KeyRing {
     ///
     /// The keyring must either grant the caller read permission, or grant
     /// the caller search permission.
-    pub fn get_linked_items(&self, max: usize) -> Result<Vec<LinkNode>, KeyError> {
+    pub fn get_links(&self, max: usize) -> Result<Links, KeyError> {
         // Allocate the requested capacity
         let mut buffer = Vec::<KeySerialId>::with_capacity(max);
 
@@ -296,13 +296,20 @@ mod test {
         let key = ring.add_key("test_read_key", b"test").unwrap();
 
         // Obtain a list of the linked keys
-        let items = ring.get_linked_items(200).unwrap();
+        let items = ring.get_links(200).unwrap();
 
         // Assert that the key is in the ring
         assert!(items.len() > 0);
-        assert!(items.iter().any(|v| v == key));
+        assert!(items.contains(key));
+
+        // Use the alternate reference to the key
+        let key_ref = items.get(key).unwrap().as_key().unwrap();
 
         // Invalidate the key
-        key.invalidate().unwrap()
+        key_ref.invalidate().unwrap();
+
+        // Assert that the key is no longer on the ring
+        let items = ring.get_links(200).unwrap();
+        assert!(!items.contains(key));
     }
 }
