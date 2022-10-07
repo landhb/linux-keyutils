@@ -196,6 +196,7 @@ mod tests {
         assert_eq!(info.get_type(), KeyType::User);
         assert_eq!(info.get_uid(), unsafe { libc::geteuid() });
         assert_eq!(info.get_gid(), unsafe { libc::getegid() });
+        assert_eq!(info.get_perms().bits(), 0x3F010000);
         assert_eq!(info.get_description(), "my-info-key");
 
         // Cleanup
