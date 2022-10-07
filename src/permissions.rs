@@ -2,7 +2,8 @@
 //! permissions defined in keyutils.h
 use bitflags::bitflags;
 
-/// Construct key permissions
+/// Construct key permissions for use with [Key::set_perms](crate::Key::set_perms)
+/// or returned by [Metadata::get_perms](crate::Metadata::get_perms).
 ///
 /// Usage:
 ///
@@ -13,6 +14,7 @@ use bitflags::bitflags;
 /// perms.set_user_perms(Permission::ALL);
 /// perms.set_group_perms(Permission::VIEW);
 /// ```
+#[derive(Debug, Copy, Clone)]
 pub struct KeyPermissions(u32);
 
 /// Construct key permissions with the builder pattern.
@@ -27,10 +29,12 @@ pub struct KeyPermissions(u32);
 ///             .group(Permission::VIEW)
 ///             .build();
 /// ```
+#[derive(Debug, Copy, Clone)]
 pub struct KeyPermissionsBuilder(KeyPermissions);
 
 bitflags! {
     /// Pre-defined bit-flags to construct permissions easily.
+    #[repr(transparent)]
     pub struct Permission: u8 {
         /// Allows viewing a key's attributes
         const VIEW = 0x1;

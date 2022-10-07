@@ -1,16 +1,41 @@
 use crate::ffi::{self, KeyCtlOperation, KeySerialId};
-use crate::{KeyError, KeyPermissions};
-use alloc::string::String;
+use crate::{KeyError, KeyPermissions, Metadata};
 use core::fmt;
 
 /// A key corresponding to a specific real ID.
+///
+/// Generally you will either create or obtain a Key via the [KeyRing](crate::KeyRing)
+/// interface. Since keys must be linked with a keyring to be valid.
+///
+/// For example:
+///
+/// ```
+/// use linux_keyutils::{Key, KeyRing, KeyRingIdentifier, KeyError};
+/// use zeroize::Zeroize;
+///
+/// // Name of my program's key
+/// const KEYNAME: &'static str = "my-process-key";
+///
+/// // Locate the key in the process keyring and update the secret
+/// fn update_secret<T: AsRef<[u8]> + Zeroize>(data: &T) -> Result<(), KeyError> {
+///     // Get the current process keyring
+///     let ring = KeyRing::from_special_id(KeyRingIdentifier::Process, false)?;
+///
+///     // Locate the key we previously created
+///     let key = ring.search(KEYNAME)?;
+///
+///     // Change the data it contains
+///     key.update(data)?;
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Key(KeySerialId);
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let description = self.description().map_err(|_| fmt::Error::default())?;
-        write!(f, "Key({})", description)
+        let info = self.metadata().map_err(|_| fmt::Error::default())?;
+        write!(f, "Key({:?})", info)
     }
 }
 
@@ -25,30 +50,11 @@ impl Key {
         self.0
     }
 
-    /// Obtain a string describing the attributes of a specified key.
+    /// Obtain information describing the attributes of this key.
     ///
     /// The key must grant the caller view permission.
-    ///
-    /// The returned string contains the following information about
-    /// the key:
-    ///
-    /// `type;uid;gid;perm;description`
-    ///
-    /// In the above, type and description are strings, uid and gid are
-    /// decimal strings, and perm is a hexadecimal permissions mask.
-    pub fn description(&self) -> Result<String, KeyError> {
-        let mut result = alloc::vec![0u8; 512];
-
-        // Obtain the description from the kernel
-        let _ = ffi::keyctl!(
-            KeyCtlOperation::Describe,
-            self.0.as_raw_id() as libc::c_ulong,
-            result.as_mut_ptr() as _,
-            result.len() as _
-        )?;
-
-        // Construct the string from the resulting data ensuring utf8 compat
-        String::from_utf8(result).or(Err(KeyError::InvalidDescription))
+    pub fn metadata(&self) -> Result<Metadata, KeyError> {
+        Metadata::from_id(self.0)
     }
 
     /// Read the payload data of a key.
@@ -89,7 +95,7 @@ impl Key {
     /// If the caller doesn't have the CAP_SYS_ADMIN capability, it can change
     /// permissions only only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
-    pub fn set_perm(&self, perm: KeyPermissions) -> Result<(), KeyError> {
+    pub fn set_perms(&self, perm: KeyPermissions) -> Result<(), KeyError> {
         _ = ffi::keyctl!(
             KeyCtlOperation::SetPerm,
             self.0.as_raw_id() as libc::c_ulong,
@@ -198,8 +204,30 @@ impl Key {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{KeyRing, KeyRingIdentifier, Permission};
+    use crate::{KeyRing, KeyRingIdentifier, KeyType, Permission};
     use zeroize::Zeroizing;
+
+    #[test]
+    fn test_metadata() {
+        let secret = "Test Data";
+
+        // Obtain the default User keyring
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // Create the key
+        let key = ring.add_key("my-info-key", secret).unwrap();
+
+        // Obtain and verify the info
+        let info = key.metadata().unwrap();
+        assert_eq!(info.get_type(), KeyType::User);
+        assert_eq!(info.get_uid(), unsafe { libc::geteuid() });
+        assert_eq!(info.get_gid(), unsafe { libc::getegid() });
+        assert_eq!(info.get_perms().bits(), 0x3F010000);
+        assert_eq!(info.get_description(), "my-info-key");
+
+        // Cleanup
+        key.invalidate().unwrap()
+    }
 
     #[test]
     fn test_user_keyring_add_key() {
@@ -222,7 +250,7 @@ mod tests {
         perms.set_group_perms(Permission::ALL);
 
         // Set the permissions
-        key.set_perm(perms).unwrap();
+        key.set_perms(perms).unwrap();
 
         // Read the secret and verify it matches
         let len = key.read(&mut buf).unwrap();
