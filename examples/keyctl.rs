@@ -95,7 +95,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let perms = KeyPermissionsBuilder::builder()
                 .user(Permission::ALL)
                 .build();
-            key.set_perm(perms)?;
+            key.set_perms(perms)?;
         }
         // Search for an existing key by description and attempt to
         // invalidate they key
