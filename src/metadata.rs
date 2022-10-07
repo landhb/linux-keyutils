@@ -5,7 +5,8 @@ use alloc::string::ToString;
 use core::str::{self, FromStr};
 
 /// Information about the given node/entry.
-/// Returned by [Key::metadata] or [KeyRing::metadata]
+/// Returned by [Key::metadata](crate::Key::metadata)
+/// or [KeyRing::metadata](crate::KeyRing::metadata)
 #[derive(Debug, Clone)]
 pub struct Metadata {
     ktype: KeyType,

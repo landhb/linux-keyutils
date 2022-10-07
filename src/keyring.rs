@@ -260,7 +260,7 @@ mod test {
             .build();
 
         // Enforce perms
-        key.set_perm(perms).unwrap();
+        key.set_perms(perms).unwrap();
 
         // Search should succeed
         let result = ring.search("test_search").unwrap();

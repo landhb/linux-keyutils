@@ -2,7 +2,8 @@
 //! permissions defined in keyutils.h
 use bitflags::bitflags;
 
-/// Construct key permissions for use with [Key::set_perm]
+/// Construct key permissions for use with [Key::set_perms](crate::Key::set_perms)
+/// or returned by [Metadata::get_perms](crate::Metadata::get_perms).
 ///
 /// Usage:
 ///

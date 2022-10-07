@@ -4,8 +4,8 @@ use core::fmt;
 
 /// A key corresponding to a specific real ID.
 ///
-/// Generally you will either create or obtain a Key via the [KeyRing] interface.
-/// Since keys must be linked with a keyring to be valid.
+/// Generally you will either create or obtain a Key via the [KeyRing](crate::KeyRing)
+/// interface. Since keys must be linked with a keyring to be valid.
 ///
 /// For example:
 ///
@@ -95,7 +95,7 @@ impl Key {
     /// If the caller doesn't have the CAP_SYS_ADMIN capability, it can change
     /// permissions only only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
-    pub fn set_perm(&self, perm: KeyPermissions) -> Result<(), KeyError> {
+    pub fn set_perms(&self, perm: KeyPermissions) -> Result<(), KeyError> {
         _ = ffi::keyctl!(
             KeyCtlOperation::SetPerm,
             self.0.as_raw_id() as libc::c_ulong,
@@ -250,7 +250,7 @@ mod tests {
         perms.set_group_perms(Permission::ALL);
 
         // Set the permissions
-        key.set_perm(perms).unwrap();
+        key.set_perms(perms).unwrap();
 
         // Read the secret and verify it matches
         let len = key.read(&mut buf).unwrap();
