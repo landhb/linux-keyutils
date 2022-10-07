@@ -300,16 +300,16 @@ mod test {
 
         // Assert that the key is in the ring
         assert!(items.len() > 0);
-        assert!(items.contains(key));
+        assert!(items.contains(&key));
 
         // Use the alternate reference to the key
-        let key_ref = items.get(key).unwrap().as_key().unwrap();
+        let key_ref = items.get(&key).unwrap().as_key().unwrap();
 
         // Invalidate the key
         key_ref.invalidate().unwrap();
 
         // Assert that the key is no longer on the ring
         let items = ring.get_links(200).unwrap();
-        assert!(!items.contains(key));
+        assert!(!items.contains(&key));
     }
 }

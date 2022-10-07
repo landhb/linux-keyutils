@@ -14,6 +14,24 @@ pub enum LinkNode {
 }
 
 /// A collection of LinkNodes, returned from [KeyRing::get_links]
+///
+/// For example:
+///
+/// ```
+/// use linux_keyutils::{Key, KeyRing, KeyRingIdentifier, KeyError};
+///
+/// // Test if a particular Key is linked to the user session KeyRing
+/// fn is_linked_to_user_session(key: &Key) -> Result<bool, KeyError> {
+///     // Get the  keyring
+///     let ring = KeyRing::from_special_id(KeyRingIdentifier::UserSession, false)?;
+///
+///     // Locate all the links
+///     let links = ring.get_links(200)?;
+///
+///     // Determine if the key is linked to the ring
+///     Ok(links.contains(key))
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Links(Vec<LinkNode>);
 
@@ -98,18 +116,18 @@ impl Links {
     }
 
     /// Obtain the entry with the provided ID/Key/Keyring
-    pub fn get<T>(&self, entry: T) -> Option<&LinkNode>
+    pub fn get<T>(&self, entry: &T) -> Option<&LinkNode>
     where
         LinkNode: PartialEq<T>,
     {
-        self.0.iter().find(|v| **v == entry)
+        self.0.iter().find(|v| *v == entry)
     }
 
     /// Check if the list contains the provided ID/Key/Keyring
-    pub fn contains<T>(&self, entry: T) -> bool
+    pub fn contains<T>(&self, entry: &T) -> bool
     where
         LinkNode: PartialEq<T>,
     {
-        self.0.iter().any(|v| *v == entry)
+        self.0.iter().any(|v| v == entry)
     }
 }
