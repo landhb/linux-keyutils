@@ -57,7 +57,9 @@ impl Key {
         Metadata::from_id(self.0)
     }
 
-    /// Read the payload data of a key.
+    /// Read the payload data of a key into a provided mutable slice.
+    ///
+    /// The returned usize is the number of bytes read into the slice.
     ///
     /// The key must either grant the caller read permission, or grant
     /// the caller search permission when searched for from the process
@@ -71,6 +73,31 @@ impl Key {
             buffer.as_mut().len() as _
         )? as usize;
         Ok(len)
+    }
+
+    /// Read the payload data of a key into a provided writer
+    ///
+    /// The key must either grant the caller read permission, or grant
+    /// the caller search permission when searched for from the process
+    /// keyrings (i.e., the key is possessed).
+    #[cfg(feature = "std")]
+    pub fn read_into<W: std::io::Write>(&self, destination: &mut W) -> Result<(), KeyError> {
+        // Ensure we have enough room to write up to the maximum for a UserKey
+        let mut buffer = vec![0u8; 65535];
+
+        // Obtain the key
+        let len = ffi::keyctl!(
+            KeyCtlOperation::Read,
+            self.0.as_raw_id() as libc::c_ulong,
+            buffer.as_mut_ptr() as _,
+            buffer.capacity() as _
+        )? as usize;
+
+        // Write the entire result into the writer
+        destination
+            .write_all(&buffer[..len])
+            .or(Err(KeyError::WriteError))?;
+        Ok(())
     }
 
     /// Update a key's data payload.

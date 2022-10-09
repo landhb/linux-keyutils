@@ -51,6 +51,9 @@ pub enum KeyError {
     /// Operation not supported
     OperationNotSupported,
 
+    /// Write to destination failed
+    WriteError,
+
     /// Unknown - catch all, return this instead of panicing
     Unknown(i32),
 }
