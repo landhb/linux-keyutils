@@ -1,4 +1,5 @@
 use crate::ffi::{self, KeyCtlOperation, KeySerialId};
+use crate::utils::Vec;
 use crate::{KeyError, KeyPermissions, Metadata};
 use core::fmt;
 
@@ -75,15 +76,14 @@ impl Key {
         Ok(len)
     }
 
-    /// Read the payload data of a key into a provided writer
+    /// Read the payload data of a key, returning a newly allocated vector.
     ///
     /// The key must either grant the caller read permission, or grant
     /// the caller search permission when searched for from the process
     /// keyrings (i.e., the key is possessed).
-    #[cfg(feature = "std")]
-    pub fn read_into<W: std::io::Write>(&self, destination: &mut W) -> Result<(), KeyError> {
+    pub fn read_to_vec(&self) -> Result<Vec<u8>, KeyError> {
         // Ensure we have enough room to write up to the maximum for a UserKey
-        let mut buffer = vec![0u8; 65535];
+        let mut buffer = Vec::with_capacity(65536);
 
         // Obtain the key
         let len = ffi::keyctl!(
@@ -93,11 +93,11 @@ impl Key {
             buffer.capacity() as _
         )? as usize;
 
-        // Write the entire result into the writer
-        destination
-            .write_all(&buffer[..len])
-            .or(Err(KeyError::WriteError))?;
-        Ok(())
+        // Update length
+        unsafe {
+            buffer.set_len(len);
+        }
+        Ok(buffer)
     }
 
     /// Update a key's data payload.
@@ -254,6 +254,22 @@ mod tests {
 
         // Cleanup
         key.invalidate().unwrap()
+    }
+
+    #[test]
+    fn test_read_into_vec() {
+        let secret = "Test Data";
+
+        // Obtain the default User keyring
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // Create the key
+        let key = ring.add_key("vec-read-key", secret).unwrap();
+
+        // Verify the payload
+        let payload = key.read_to_vec().unwrap();
+        assert_eq!(secret.as_bytes(), &payload);
+        key.invalidate().unwrap();
     }
 
     #[test]
