@@ -1,4 +1,5 @@
 use crate::ffi::{self, KeyCtlOperation, KeySerialId};
+use crate::utils::Vec;
 use crate::{KeyError, KeyPermissions, Metadata};
 use core::fmt;
 
@@ -57,7 +58,9 @@ impl Key {
         Metadata::from_id(self.0)
     }
 
-    /// Read the payload data of a key.
+    /// Read the payload data of a key into a provided mutable slice.
+    ///
+    /// The returned usize is the number of bytes read into the slice.
     ///
     /// The key must either grant the caller read permission, or grant
     /// the caller search permission when searched for from the process
@@ -71,6 +74,30 @@ impl Key {
             buffer.as_mut().len() as _
         )? as usize;
         Ok(len)
+    }
+
+    /// Read the payload data of a key, returning a newly allocated vector.
+    ///
+    /// The key must either grant the caller read permission, or grant
+    /// the caller search permission when searched for from the process
+    /// keyrings (i.e., the key is possessed).
+    pub fn read_to_vec(&self) -> Result<Vec<u8>, KeyError> {
+        // Ensure we have enough room to write up to the maximum for a UserKey
+        let mut buffer = Vec::with_capacity(65536);
+
+        // Obtain the key
+        let len = ffi::keyctl!(
+            KeyCtlOperation::Read,
+            self.0.as_raw_id() as libc::c_ulong,
+            buffer.as_mut_ptr() as _,
+            buffer.capacity() as _
+        )? as usize;
+
+        // Update length
+        unsafe {
+            buffer.set_len(len);
+        }
+        Ok(buffer)
     }
 
     /// Update a key's data payload.
@@ -227,6 +254,22 @@ mod tests {
 
         // Cleanup
         key.invalidate().unwrap()
+    }
+
+    #[test]
+    fn test_read_into_vec() {
+        let secret = "Test Data";
+
+        // Obtain the default User keyring
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // Create the key
+        let key = ring.add_key("vec-read-key", secret).unwrap();
+
+        // Verify the payload
+        let payload = key.read_to_vec().unwrap();
+        assert_eq!(secret.as_bytes(), &payload);
+        key.invalidate().unwrap();
     }
 
     #[test]
