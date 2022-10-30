@@ -54,7 +54,7 @@
 //! }
 //! ```
 #![cfg_attr(not(feature = "std"), no_std)]
-//#![deny(warnings)]
+#![deny(warnings)]
 
 // CString requires alloc however
 extern crate alloc;
