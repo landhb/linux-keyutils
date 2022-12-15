@@ -44,5 +44,5 @@ additional terms or conditions.
 [docs-lib]: https://docs.rs/linux-keyutils
 [codecov]: https://img.shields.io/codecov/c/github/landhb/linux-keyutils?style=flat-square
 [codecov-url]: https://codecov.io/gh/landhb/linux-keyutils
-[build]: https://img.shields.io/github/workflow/status/landhb/linux-keyutils/Checks?master?style=flat-square
+[build]: https://img.shields.io/github/actions/workflow/status/landhb/linux-keyutils/checks.yml?branch=main?style=flat-square
 [build-url]: https://github.com/landhb/linux-keyutils/actions?query=workflow%3Achecks
