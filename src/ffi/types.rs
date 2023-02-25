@@ -180,11 +180,18 @@ impl From<KeySerialId> for i32 {
     }
 }
 
+/// Direct conversion
+impl From<i32> for KeySerialId {
+    fn from(n: i32) -> Self {
+        Self(n)
+    }
+}
+
 /// Allow easy conversion from u64 to KeySerialId
-impl TryFrom<u64> for KeySerialId {
+impl TryFrom<i64> for KeySerialId {
     type Error = KeyError;
 
-    fn try_from(n: u64) -> Result<Self, Self::Error> {
+    fn try_from(n: i64) -> Result<Self, Self::Error> {
         Ok(Self(n.try_into().or(Err(KeyError::InvalidIdentifier))?))
     }
 }
