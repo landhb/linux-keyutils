@@ -85,9 +85,7 @@ jobs:
     - run: rustup toolchain install ${{ matrix.channel }}
     - run: chmod +x /tmp/cross
     - name: Build
-      run: /tmp/cross build --package dbus --features vendored --target ${{ matrix.target }}
-    #- name: Run tests
-    #  run: /tmp/cross test --package libdbus-sys --features vendored --target ${{ matrix.target }}
+      run: /tmp/cross build --features vendored --target ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
