@@ -28,7 +28,7 @@ impl KeyRing {
         let id: KeySerialId = ffi::keyctl!(
             KeyCtlOperation::GetKeyRingId,
             id as libc::c_ulong,
-            u64::from(create)
+            u32::from(create).into()
         )?
         .try_into()
         .or(Err(KeyError::InvalidIdentifier))?;

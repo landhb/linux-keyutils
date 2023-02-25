@@ -67,7 +67,7 @@ pub(crate) fn keyctl_impl(
     arg3: libc::c_ulong,
     arg4: libc::c_ulong,
     arg5: libc::c_ulong,
-) -> Result<libc::c_ulong, KeyError> {
+) -> Result<libc::c_long, KeyError> {
     // Perform the actual system call
     let res = unsafe { libc::syscall(libc::SYS_keyctl, operation as u32, arg2, arg3, arg4, arg5) };
 
@@ -77,5 +77,5 @@ pub(crate) fn keyctl_impl(
     }
 
     // Otherwise return the result
-    res.try_into().or(Err(KeyError::InvalidIdentifier))
+    Ok(res)
 }

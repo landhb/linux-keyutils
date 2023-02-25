@@ -235,6 +235,12 @@ mod tests {
     use zeroize::Zeroizing;
 
     #[test]
+    fn test_from_raw_id() {
+        let raw: i32 = 0x12345;
+        let _key = Key::from_id(raw.into());
+    }
+
+    #[test]
     fn test_metadata() {
         let secret = "Test Data";
 
