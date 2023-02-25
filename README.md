@@ -3,6 +3,8 @@
 
 Rust interface to the Linux key-management facility. Provides a safe interface around the raw system calls allowing user-space programs to perform key manipulation.
 
+There is a good [cloudflare blog](https://blog.cloudflare.com/the-linux-kernel-key-retention-service-and-why-you-should-use-it-in-your-next-application/) discussing why it should be used.
+
 ## Basic Usage
 
 To use `linux-keyutils`, first add this to your `Cargo.toml`:
