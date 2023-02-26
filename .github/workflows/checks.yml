@@ -86,6 +86,8 @@ jobs:
     - run: chmod +x /tmp/cross
     - name: Build
       run: /tmp/cross build --all-features --target ${{ matrix.target }}
+    - name: Test
+      run: CROSS_CONTAINER_OPTS="--security-opt seccomp=unconfined" /tmp/cross test --all-features --target ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
