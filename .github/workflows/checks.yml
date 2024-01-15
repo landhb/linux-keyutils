@@ -20,7 +20,7 @@ jobs:
       - uses: XAMPPRocky/get-github-release@v1
         id: cross
         with:
-          owner: rust-embedded
+          owner: cross-rs
           repo: cross
           matches: ${{ matrix.platform }}
           token: ${{ secrets.GITHUB_TOKEN }}
