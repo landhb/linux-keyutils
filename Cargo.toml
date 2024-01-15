@@ -15,7 +15,7 @@ license = "Apache-2.0 OR MIT"
 
 [features]
 default = []
-std = []
+std = ["bitflags/std"]
 
 [[example]]
 name = "keyctl"
@@ -23,7 +23,7 @@ required-features = ["std"]
 
 [dependencies]
 libc = {version = "0.2.132", default-features = false}
-bitflags = "2.4"
+bitflags = {version = "2.4", default-features = false}
 
 [dev-dependencies]
 zeroize = "1.5.7"
