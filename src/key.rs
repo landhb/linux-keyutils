@@ -35,7 +35,7 @@ pub struct Key(KeySerialId);
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let info = self.metadata().map_err(|_| fmt::Error::default())?;
+        let info = self.metadata().map_err(|_| fmt::Error)?;
         write!(f, "Key({:?})", info)
     }
 }
