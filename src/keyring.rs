@@ -95,6 +95,33 @@ impl KeyRing {
         Ok(Key::from_id(id))
     }
 
+    /// Attempts to find a key of the given type with a description that
+    /// matches the specified description. If such a key could not be found,
+    /// then the key is optionally created.
+    ///
+    /// If the key is found or created, it is attached it to the keyring
+    /// and returns the key's serial number.
+    ///
+    /// If the key is not found and callout info is empty then the call
+    /// fails with the error ENOKEY.
+    ///
+    /// If the key is not found and callout info is not empty, then the
+    /// kernel attempts to invoke a user-space program to instantiate the
+    /// key.
+    pub fn request_key<D: AsRef<str> + ?Sized, C: AsRef<str> + ?Sized>(
+        &self,
+        description: &D,
+        callout: Option<&C>,
+    ) -> Result<Key, KeyError> {
+        let id = ffi::request_key(
+            KeyType::User,
+            self.id.as_raw_id() as libc::c_ulong,
+            description.as_ref(),
+            callout.map(|c| c.as_ref()),
+        )?;
+        Ok(Key::from_id(id))
+    }
+
     /// Search for a key in the keyring tree, starting with this keyring as the head,
     /// returning its ID.
     ///
@@ -269,8 +296,26 @@ mod test {
         // Assert that the ID is the same
         assert_eq!(key.get_id(), result.get_id());
 
+        // Request should also succeed
+        let result = ring.request_key("test_search", None::<&str>).unwrap();
+
+        // Assert that the ID is the same
+        assert_eq!(key.get_id(), result.get_id());
+
         // Invalidate the key
         key.invalidate().unwrap();
+    }
+
+    #[test]
+    fn test_request_non_existing_key() {
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        let result = ring.request_key("test_request_no_exist", None::<&str>);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), KeyError::KeyDoesNotExist);
     }
 
     #[test]

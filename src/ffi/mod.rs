@@ -21,7 +21,7 @@ macro_rules! keyctl {
 pub use types::*;
 
 #[allow(unused_imports)]
-pub(crate) use functions::{add_key, keyctl_impl};
+pub(crate) use functions::{add_key, keyctl_impl, request_key};
 
 // Export the macro for use
 pub(crate) use keyctl;
