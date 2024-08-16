@@ -120,7 +120,7 @@ impl Key {
     /// Change the permissions of the key with the ID provided
     ///
     /// If the caller doesn't have the CAP_SYS_ADMIN capability, it can change
-    /// permissions only only for the keys it owns. (More precisely: the caller's
+    /// permissions only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
     pub fn set_perms(&self, perm: KeyPermissions) -> Result<(), KeyError> {
         _ = ffi::keyctl!(

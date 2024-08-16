@@ -11,7 +11,7 @@ pub struct KeyRing {
 }
 
 impl KeyRing {
-    /// Initialize a new [Key] object from the provided ID
+    /// Initialize a new [KeyRing] object from the provided ID
     pub(crate) fn from_id(id: KeySerialId) -> Self {
         Self { id }
     }
