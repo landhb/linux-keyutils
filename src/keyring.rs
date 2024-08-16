@@ -319,6 +319,31 @@ mod test {
     }
 
     #[test]
+    #[ignore]
+    fn test_request_non_existing_key_callout() {
+        let callout = "Test Data from Callout";
+
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // The test expects that the key is instantiated by a program invoked by
+        // /sbin/request-key and that the key data is taken from the callout info
+        // passed here.
+        //
+        // The following examples/keyctl command in /etc/request-key.conf is known to work:
+        // create	user	test_callout	*		/path/to/examples/keyctl instantiate --keyid %k --payload %c --ring %S
+        let key = ring.request_key("test_callout", Some(callout));
+
+        assert!(key.is_ok());
+
+        // Verify the payload
+        let payload = key.unwrap().read_to_vec().unwrap();
+        assert_eq!(callout.as_bytes(), &payload);
+        key.unwrap().invalidate().unwrap();
+    }
+
+    #[test]
     fn test_search_non_existing_key() {
         // Test that a keyring that normally doesn't exist by default is
         // created when called.
