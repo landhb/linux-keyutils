@@ -30,6 +30,7 @@ pub enum KeyType {
 
 /// Special identifiers for default keyrings. See `man 7 keyrings`.
 #[allow(dead_code)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum KeyRingIdentifier {
     /// Key ID for thread-specific keyring
     Thread = -1,
