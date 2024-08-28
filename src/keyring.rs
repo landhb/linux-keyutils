@@ -230,9 +230,8 @@ impl KeyRing {
     /// don't want to have to open a keyring before linking it.
     ///
     /// The caller must have link permissions on the added keyring, and write
-    /// permission on this keyring. In addition, this method will return
-    /// KeyError::KeyDoesNotExist if the target keyring has not yet been
-    /// created.
+    /// permission on this keyring. Requesting to link to a non-existent default
+    /// keyring will result in that keyring being created automatically.
     pub fn link_keyring_id(&self, keyringid: KeyRingIdentifier) -> Result<(), KeyError> {
         _ = ffi::keyctl!(
             KeyCtlOperation::Link,
@@ -349,6 +348,81 @@ mod test {
         // Assert that the ID is the same
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), KeyError::KeyDoesNotExist);
+    }
+
+    #[test]
+    fn test_link_unlink_keyrings() {
+        // Get a couple of unlinked keyrings to test
+        let sess = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+        assert!(sess.id.as_raw_id() > 0);
+        let thread = KeyRing::from_special_id(KeyRingIdentifier::Thread, true).unwrap();
+        assert!(thread.id.as_raw_id() > 0);
+
+        // Assert that the keyrings are not linked
+        let items = sess.get_links(200).unwrap();
+        assert!(!items.contains(&thread));
+
+        // Link the keyrings
+        let _ = sess.link_keyring(thread).unwrap();
+
+        // Assert that the keyrings are now linked
+        let items = sess.get_links(200).unwrap();
+        assert!(items.contains(&thread));
+
+        // Unlink the keyrings
+        let _ = sess.unlink_keyring(thread).unwrap();
+
+        // Assert that the keyrings are unlinked again
+        let items = sess.get_links(200).unwrap();
+        assert!(!items.contains(&thread));
+    }
+    #[test]
+    fn test_link_unlink_keyrings_with_id() {
+        // Get a couple of unlinked keyrings to test
+        let sess = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+        assert!(sess.id.as_raw_id() > 0);
+        let thread = KeyRing::from_special_id(KeyRingIdentifier::Thread, true).unwrap();
+        assert!(thread.id.as_raw_id() > 0);
+
+        // Assert that the keyrings are not linked
+        let items = sess.get_links(200).unwrap();
+        assert!(!items.contains(&thread));
+
+        // Link the keyrings
+        let _ = sess.link_keyring_id(KeyRingIdentifier::Thread).unwrap();
+
+        // Assert that the keyrings are now linked
+        let items = sess.get_links(200).unwrap();
+        assert!(items.contains(&thread));
+
+        // Unlink the keyrings
+        let _ = sess.unlink_keyring_id(KeyRingIdentifier::Thread).unwrap();
+
+        // Assert that the keyrings are unlinked again
+        let items = sess.get_links(200).unwrap();
+        assert!(!items.contains(&thread));
+    }
+
+    #[test]
+    fn test_linking_nonexistent_keyrings() {
+        // Get existent keyring
+        let sess = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+        assert!(sess.id.as_raw_id() > 0);
+
+        // Test that the target keyring doesn't exist
+        let thread = KeyRing::from_special_id(KeyRingIdentifier::Thread, false);
+        assert!(matches!(thread, Err(KeyError::KeyDoesNotExist)));
+
+        // Unlinking a non-existent keyring
+        let result = sess.unlink_keyring_id(KeyRingIdentifier::Thread);
+        assert!(matches!(result, Err(KeyError::KeyDoesNotExist)));
+
+        // Linking a non-existent keyring
+        sess.link_keyring_id(KeyRingIdentifier::Thread).unwrap();
+
+        // After attempting to link the special keyring, it will have been created
+        let sess = KeyRing::from_special_id(KeyRingIdentifier::Thread, false).unwrap();
+        assert!(sess.id.as_raw_id() > 0);
     }
 
     #[test]
