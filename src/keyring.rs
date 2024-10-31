@@ -72,8 +72,9 @@ impl KeyRing {
         Metadata::from_id(self.id)
     }
 
-    /// Creates or updates a key of the given type and description, instantiates
-    /// it with the payload of length plen, attaches it to the User keyring.
+    /// Creates or updates a key of the given description and User type,
+    /// instantiates it with the payload of length plen, attaches it to the
+    /// keyring.
     ///
     /// If the destination keyring already contains a key that matches
     /// the specified type and description, then, if the key type supports
