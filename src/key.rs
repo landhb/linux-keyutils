@@ -120,7 +120,7 @@ impl Key {
     /// Change the permissions of the key with the ID provided
     ///
     /// If the caller doesn't have the CAP_SYS_ADMIN capability, it can change
-    /// permissions only only for the keys it owns. (More precisely: the caller's
+    /// permissions only for the keys it owns. (More precisely: the caller's
     /// filesystem UID must match the UID of the key.)
     pub fn set_perms(&self, perm: KeyPermissions) -> Result<(), KeyError> {
         _ = ffi::keyctl!(
@@ -223,6 +223,32 @@ impl Key {
         ffi::keyctl!(
             KeyCtlOperation::Invalidate,
             self.0.as_raw_id() as libc::c_ulong
+        )?;
+        Ok(())
+    }
+
+    /// Instantiate a partially constructed key.
+    ///
+    /// To instantiate a key, the caller must have the appropriate
+    /// authorization key. This is automatically granted when the caller
+    /// is invoked by /sbin/request-key.
+    pub fn instantiate<T: AsRef<[u8]>>(
+        &self,
+        payload: &T,
+        id: KeySerialId,
+    ) -> Result<(), KeyError> {
+        // When instanting keyrings the payload will be NULL
+        let buffer = payload.as_ref();
+        let (payload, plen) = match buffer.len() {
+            0 => (core::ptr::null(), 0),
+            _ => (buffer.as_ptr(), buffer.len()),
+        };
+        _ = ffi::keyctl!(
+            KeyCtlOperation::Instantiate,
+            self.0.as_raw_id() as libc::c_ulong,
+            payload as _,
+            plen as _,
+            id.as_raw_id() as libc::c_ulong
         )?;
         Ok(())
     }

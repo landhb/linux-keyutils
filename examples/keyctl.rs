@@ -3,8 +3,8 @@
 //!
 //! Demo code for the linux_keyutils crate.
 use clap::Parser;
+use linux_keyutils::{Key, KeyRing, KeyRingIdentifier, KeySerialId};
 use linux_keyutils::{KeyPermissionsBuilder, Permission};
-use linux_keyutils::{KeyRing, KeyRingIdentifier};
 use std::error::Error;
 use zeroize::Zeroizing;
 
@@ -50,6 +50,17 @@ enum Command {
     Invalidate {
         #[clap(short, long)]
         description: String,
+    },
+    /// Instantiate a partially constructed key
+    Instantiate {
+        #[clap(short, long)]
+        keyid: Option<i32>,
+
+        #[clap(short, long)]
+        payload: String,
+
+        #[clap(short, long)]
+        ring: Option<i32>,
     },
 }
 
@@ -103,6 +114,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             let key = ring.search(&description)?;
             key.invalidate()?;
             println!("Removed key with ID {:?}", key.get_id());
+        }
+        // Instantiate a partially constructed key
+        Command::Instantiate {
+            keyid,
+            payload,
+            ring,
+        } => {
+            let key = Key::from_id(KeySerialId::new(keyid.unwrap_or(i32::MAX)));
+            key.instantiate(&payload, KeySerialId::new(ring.unwrap_or(i32::MAX)))?;
         }
     };
 

@@ -56,6 +56,65 @@ pub(crate) fn add_key(
     ))
 }
 
+/// request_key() attempts to find a key of the given type with a description that
+/// matches the specified description. If such a key could not be found, then
+/// the key is optionally created.
+///
+/// If the key is found or created, request_key() attaches it to the keyring
+/// and returns the key's serial number.
+///
+/// request_key() first recursively searches for a matching key in all of the keyrings
+/// attached to the calling process. The keyrings are searched in the order:
+/// thread-specific keyring, process-specific keyring, and then session keyring.
+///
+/// If request_key() is called from a program invoked by request_key() on behalf
+/// of some other process to generate a key, then the keyrings of that other process
+/// will be searched next, using that other process's user ID, group ID, supplementary
+/// group IDs, and security context to determine access.
+///
+/// The search of the keyring tree is breadth-first: the keys in each keyring searched
+/// are checked for a match before any child keyrings are recursed into. Only keys for
+/// which the caller has search permission be found, and only keyrings for which the
+/// caller has search permission may be searched.
+///
+/// If the key is not found and callout info is empty then the call fails with the
+/// error ENOKEY.
+///
+/// If the key is not found and callout info is not empty, then the kernel attempts
+/// to invoke a user-space program to instantiate the key.
+pub(crate) fn request_key(
+    ktype: KeyType,
+    keyring: libc::c_ulong,
+    description: &str,
+    info: Option<&str>,
+) -> Result<KeySerialId, KeyError> {
+    // Perform conversion into a c string
+    let description = CString::new(description).or(Err(KeyError::InvalidDescription))?;
+    let callout = CString::new(info.unwrap_or("")).or(Err(KeyError::InvalidDescription))?;
+
+    // Perform the actual system call. By setting callout to NULL the kernel will
+    // not invoke /sbin/request-key
+    let res = unsafe {
+        libc::syscall(
+            libc::SYS_request_key,
+            Into::<&'static CStr>::into(ktype).as_ptr(),
+            description.as_ptr(),
+            info.map_or_else(core::ptr::null, |_| callout.as_ptr()),
+            keyring as u32,
+        )
+    };
+
+    // Return the underlying error
+    if res < 0 {
+        return Err(KeyError::from_errno());
+    }
+
+    // Otherwise return the ID
+    Ok(KeySerialId::new(
+        res.try_into().or(Err(KeyError::InvalidIdentifier))?,
+    ))
+}
+
 /// keyctl() allows user-space programs to perform key manipulation.
 ///
 /// The operation performed by keyctl() is determined by the value of the operation argument.
