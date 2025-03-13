@@ -426,6 +426,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn test_empty_service_and_user() {
         let name = generate_random_string();
         let in_pass = "doesn't matter";
@@ -487,7 +488,8 @@ mod tests {
         );
     }
 
-    pub fn test_noop_get_update_attributes() {
+    #[test]
+    fn test_noop_get_update_attributes() {
         use std::collections::HashMap;
 
         let name = generate_random_string();
