@@ -25,7 +25,7 @@ jobs:
 
         - name: Install Required Packages
           run: |
-            sudo apt update && apt -y upgrade
+            sudo apt update && sudo apt -y upgrade
             sudo apt install -y build-essential libssl-dev
 
         - name: Run cargo-tarpaulin
