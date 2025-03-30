@@ -229,11 +229,11 @@ impl Key {
 
     /// Assume the authority for the calling thread to instantiate a key.
     ///
-    /// Authority  over a key can be assumed only if the calling thread has present
+    /// Authority over a key can be assumed only if the calling thread has present
     /// in its keyrings the authorization key that is associated with the specified key.
     ///
-    /// In other words, the KEYCTL_ASSUME_AUTHORITY operation is  available  only  from
-    /// a  request-key(8)-style  program.
+    /// In other words, the KEYCTL_ASSUME_AUTHORITY operation is available only from
+    /// a request-key(8)-style program.
     ///
     /// The caller must have search permission on the authorization key.
     pub fn assume_authority(&self) -> Result<(), KeyError> {
