@@ -23,16 +23,16 @@ jobs:
             toolchain: stable
             override: true
 
-        - name: Install Required Packages
+        - name: Install cargo-tarpaulin
+          run: cargo install cargo-tarpaulin
+
+        - name: Install request-key for Request/Instantiate flow
           run: |
-            sudo apt update && sudo apt -y upgrade
-            sudo apt install -y build-essential libssl-dev
+            cargo build --example request-key --features std
+            sudo mv ./target/debug/examples/request-key /sbin/request-key
 
         - name: Run cargo-tarpaulin
-          uses: actions-rs/tarpaulin@v0.1
-          with:
-            version: '0.21.0'
-            args: "--lib"
+          run: cargo-tarpaulin --lib -- --include-ignored
 
         - name: Upload to codecov.io
           uses: codecov/codecov-action@v5
