@@ -54,6 +54,15 @@ pub enum KeyError {
     /// Write to destination failed
     WriteError,
 
+    // Insufficient permissions
+    PermissionDenied,
+
+    // Missing file or directory (ENOENT)
+    //
+    // For request_key this could be due to a missing /sbin/request-key
+    // binary. I.e. keyutils utilities are not installed.
+    MissingFileOrDirectory,
+
     /// Unknown - catch all, return this instead of panicing
     Unknown(i32),
 }
@@ -73,6 +82,8 @@ impl KeyError {
     pub fn from_errno() -> KeyError {
         match unsafe { *libc::__errno_location() } {
             // Create Errors
+            libc::ENOENT => KeyError::MissingFileOrDirectory,
+            libc::EPERM => KeyError::PermissionDenied,
             libc::EACCES => KeyError::AccessDenied,
             libc::EDQUOT => KeyError::QuotaExceeded,
             libc::EFAULT => KeyError::BadAddress,

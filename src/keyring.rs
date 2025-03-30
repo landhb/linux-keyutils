@@ -11,7 +11,7 @@ pub struct KeyRing {
 }
 
 impl KeyRing {
-    /// Initialize a new [Key] object from the provided ID
+    /// Initialize a new [KeyRing] object from the provided ID
     pub(crate) fn from_id(id: KeySerialId) -> Self {
         Self { id }
     }
@@ -72,8 +72,9 @@ impl KeyRing {
         Metadata::from_id(self.id)
     }
 
-    /// Creates or updates a key of the given type and description, instantiates
-    /// it with the payload of length plen, attaches it to the User keyring.
+    /// Creates or updates a key of the given description and User type,
+    /// instantiates it with the payload of length plen, attaches it to the
+    /// keyring.
     ///
     /// If the destination keyring already contains a key that matches
     /// the specified type and description, then, if the key type supports
@@ -90,6 +91,33 @@ impl KeyRing {
             self.id.as_raw_id() as libc::c_ulong,
             description.as_ref(),
             Some(secret.as_ref()),
+        )?;
+        Ok(Key::from_id(id))
+    }
+
+    /// Attempts to find a key of the given type with a description that
+    /// matches the specified description. If such a key could not be found,
+    /// then the key is optionally created.
+    ///
+    /// If the key is found or created, it is attached it to the keyring
+    /// and returns the key's serial number.
+    ///
+    /// If the key is not found and callout info is empty then the call
+    /// fails with the error ENOKEY.
+    ///
+    /// If the key is not found and callout info is not empty, then the
+    /// kernel attempts to invoke a user-space program to instantiate the
+    /// key.
+    pub fn request_key<D: AsRef<str> + ?Sized, C: AsRef<str> + ?Sized>(
+        &self,
+        description: &D,
+        callout: Option<&C>,
+    ) -> Result<Key, KeyError> {
+        let id = ffi::request_key(
+            KeyType::User,
+            self.id.as_raw_id() as libc::c_ulong,
+            description.as_ref(),
+            callout.map(|c| c.as_ref()),
         )?;
         Ok(Key::from_id(id))
     }
@@ -331,6 +359,49 @@ mod test {
 
         // Assert that the ID is the same
         assert_eq!(key.get_id(), result.get_id());
+
+        // Request should also succeed
+        let result = ring.request_key("test_search", None::<&str>).unwrap();
+
+        // Assert that the ID is the same
+        assert_eq!(key.get_id(), result.get_id());
+
+        // Invalidate the key
+        key.invalidate().unwrap();
+    }
+
+    #[test]
+    fn test_request_non_existing_key() {
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        let result = ring.request_key("test_request_no_exist", None::<&str>);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), KeyError::KeyDoesNotExist);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_request_non_existing_key_callout() {
+        let callout = "Test Data from Callout";
+
+        // Test that a keyring that normally doesn't exist by default is
+        // created when called.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Session, false).unwrap();
+
+        // The test expects that the key is instantiated by a program invoked by
+        // /sbin/request-key and that the key data is taken from the callout info
+        // passed here.
+        //
+        // The following examples/keyctl command in /etc/request-key.conf is known to work:
+        // create	user	test_callout	*		/path/to/examples/keyctl instantiate --keyid %k --payload %c --ring %S
+        let key = ring.request_key("test_callout", Some(callout)).unwrap();
+
+        // Verify the payload
+        let payload = key.read_to_vec().unwrap();
+        assert_eq!(callout.as_bytes(), &payload);
 
         // Invalidate the key
         key.invalidate().unwrap();
