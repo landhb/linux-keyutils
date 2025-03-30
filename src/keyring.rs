@@ -333,14 +333,14 @@ mod test {
         //
         // The following examples/keyctl command in /etc/request-key.conf is known to work:
         // create	user	test_callout	*		/path/to/examples/keyctl instantiate --keyid %k --payload %c --ring %S
-        let key = ring.request_key("test_callout", Some(callout));
-
-        assert!(key.is_ok());
+        let key = ring.request_key("test_callout", Some(callout)).unwrap();
 
         // Verify the payload
-        let payload = key.unwrap().read_to_vec().unwrap();
+        let payload = key.read_to_vec().unwrap();
         assert_eq!(callout.as_bytes(), &payload);
-        key.unwrap().invalidate().unwrap();
+
+        // Invalidate the key
+        key.invalidate().unwrap();
     }
 
     #[test]

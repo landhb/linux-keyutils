@@ -227,12 +227,29 @@ impl Key {
         Ok(())
     }
 
+    /// Assume the authority for the calling thread to instantiate a key.
+    ///
+    /// Authority  over a key can be assumed only if the calling thread has present
+    /// in its keyrings the authorization key that is associated with the specified key.
+    ///
+    /// In other words, the KEYCTL_ASSUME_AUTHORITY operation is  available  only  from
+    /// a  request-key(8)-style  program.
+    ///
+    /// The caller must have search permission on the authorization key.
+    pub fn assume_authority(&self) -> Result<(), KeyError> {
+        ffi::keyctl!(
+            KeyCtlOperation::AssumeAuthority,
+            self.0.as_raw_id() as libc::c_ulong
+        )?;
+        Ok(())
+    }
+
     /// Instantiate a partially constructed key.
     ///
     /// To instantiate a key, the caller must have the appropriate
     /// authorization key. This is automatically granted when the caller
     /// is invoked by /sbin/request-key.
-    pub fn instantiate<T: AsRef<[u8]>>(
+    pub fn instantiate<T: AsRef<[u8]> + ?Sized>(
         &self,
         payload: &T,
         id: KeySerialId,

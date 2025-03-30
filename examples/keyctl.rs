@@ -10,12 +10,15 @@ use zeroize::Zeroizing;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
+#[command(arg_required_else_help(true))]
+#[command(subcommand_required(true))]
 struct Args {
     #[clap(subcommand)]
     subcommand: Command,
 }
 
 #[derive(clap::Subcommand, Debug, PartialEq)]
+#[command(arg_required_else_help(true))]
 enum Command {
     /// Create a new key
     Create {
