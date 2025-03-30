@@ -14,7 +14,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Checkout repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v4
 
         - name: Install stable toolchain
           uses: actions-rs/toolchain@v1
@@ -23,14 +23,19 @@ jobs:
             toolchain: stable
             override: true
 
+        - name: Install Required Packages
+          run: |
+          apt-get update && apt-get -y upgrade
+          apt-get install -y build-essential libssl-dev
+
         - name: Run cargo-tarpaulin
           uses: actions-rs/tarpaulin@v0.1
           with:
-            version: '0.21.0'
+            version: '0.32.3'
             args: "--lib"
 
         - name: Upload to codecov.io
-          uses: codecov/codecov-action@v2
+          uses: codecov/codecov-action@v5
           with:
             file: ./cobertura.xml
 
