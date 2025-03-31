@@ -26,13 +26,17 @@ required-features = ["std"]
 name = "keystore"
 required-features = ["keystore"]
 
+[[example]]
+name = "request-key"
+required-features = ["std"]
+
 [dependencies]
-libc = { version = "0.2.132", default-features = false }
-bitflags = { version = "2.4", default-features = false }
+libc = {version = "0.2.158", default-features = false}
+bitflags = {version = "2.6", default-features = false}
 keyring = { version = "4.0.0-alpha", optional = true }
 
 [dev-dependencies]
 fastrand = "2.3.0"
 rpassword = "7.3.1"
-zeroize = "1.5.7"
-clap = { version = "4.4.11", default-features = false, features = ["std", "derive"] }
+zeroize = "1.8.1"
+clap = {version = "4.5.16", default-features = false, features = ["std", "derive", "help"]}

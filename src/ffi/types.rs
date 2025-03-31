@@ -147,13 +147,11 @@ impl KeySerialId {
 /// Using Rust's type system to ensure only valid strings are provided to the syscall.
 impl From<KeyType> for &'static CStr {
     fn from(t: KeyType) -> &'static CStr {
-        unsafe {
-            match t {
-                KeyType::KeyRing => CStr::from_bytes_with_nul_unchecked(b"keyring\0"),
-                KeyType::User => CStr::from_bytes_with_nul_unchecked(b"user\0"),
-                KeyType::Logon => CStr::from_bytes_with_nul_unchecked(b"logon\0"),
-                KeyType::BigKey => CStr::from_bytes_with_nul_unchecked(b"big_key\0"),
-            }
+        match t {
+            KeyType::KeyRing => c"keyring",
+            KeyType::User => c"user",
+            KeyType::Logon => c"logon",
+            KeyType::BigKey => c"big_key",
         }
     }
 }
