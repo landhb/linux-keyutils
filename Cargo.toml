@@ -9,17 +9,22 @@ calls allowing user-space programs to perform key manipulation.
 """
 homepage = "https://github.com/landhb/linux-keyutils"
 repository = "https://github.com/landhb/linux-keyutils"
-keywords = ["keyutils", "keyctl", "linux","keyring", "secure-storage"]
+keywords = ["keyutils", "keyctl", "linux", "keyring", "secure-storage"]
 readme = "README.md"
 license = "Apache-2.0 OR MIT"
 
 [features]
 default = []
 std = ["bitflags/std"]
+keystore = ["dep:keyring", "std"]
 
 [[example]]
 name = "keyctl"
 required-features = ["std"]
+
+[[example]]
+name = "keystore"
+required-features = ["keystore"]
 
 [[example]]
 name = "request-key"
@@ -28,7 +33,10 @@ required-features = ["std"]
 [dependencies]
 libc = {version = "0.2.158", default-features = false}
 bitflags = {version = "2.6", default-features = false}
+keyring = { version = "4.0.0-alpha", optional = true }
 
 [dev-dependencies]
+fastrand = "2.3.0"
+rpassword = "7.3.1"
 zeroize = "1.8.1"
 clap = {version = "4.5.16", default-features = false, features = ["std", "derive", "help"]}
