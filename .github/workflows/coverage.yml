@@ -32,7 +32,7 @@ jobs:
             sudo mv ./target/debug/examples/request-key /sbin/request-key
 
         - name: Run cargo-tarpaulin
-          run: cargo-tarpaulin --lib -- --include-ignored
+          run: cargo-tarpaulin --lib --features keystore -- --include-ignored
 
         - name: Upload to codecov.io
           uses: codecov/codecov-action@v5

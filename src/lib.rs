@@ -105,3 +105,9 @@ pub use links::{LinkNode, Links};
 // Expose KeyPermissions API
 mod permissions;
 pub use permissions::{KeyPermissions, KeyPermissionsBuilder, Permission};
+
+#[cfg(feature = "keystore")]
+// Expose a credential store for keyring-rs
+pub mod keystore;
+#[cfg(feature = "keystore")]
+pub use keystore::default_credential_builder;

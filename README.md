@@ -22,6 +22,10 @@ For more information please view the full [documentation](https://docs.rs/linux-
 * For std programs `KeyError` implements `std::error::Error` when the `std` feature of this crate enabled.
 * Small footprint, the library only relies on the `libc` and `bitflags` crates.
 
+## Keyring Integration
+
+This library, when compiled with the `keystore` feature, provides a credential store for use with the [keyring crate](https://crates.io/crates/keyring). See the `keystore` module docs and the [keystore.rs example](examples/keystore.rs) for details.
+
 ## License
 
 Licensed under either of the following at your discretion:

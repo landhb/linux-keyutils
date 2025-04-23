@@ -48,8 +48,10 @@ jobs:
       run: |
         cargo build --example request-key --features std
         sudo mv ./target/debug/examples/request-key /sbin/request-key
-    - name: Run tests
+    - name: Run tests (minimal including ignored)
       run: cargo test --verbose -- --include-ignored
+    - name: Run tests (keystore, std, no ignored)
+      run: cargo test --features keystore --verbose
 
   # Ensure clippy and formatting pass
   clippy:
@@ -63,7 +65,7 @@ jobs:
           override: true
           components: clippy
     - name: Run Clippy
-      run: cargo clippy --verbose -- --deny "warnings"
+      run: cargo clippy --features keystore --verbose -- --deny "warnings"
     - name: Run RustFmt
       run: cargo fmt -- --check
 
