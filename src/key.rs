@@ -60,18 +60,20 @@ impl Key {
 
     /// Read the payload data of a key into a provided mutable slice.
     ///
-    /// The returned usize is the number of bytes read into the slice.
+    /// The returned usize is the size of the key in bytes. The buffer is filled as much as
+    /// possible. If the buffer is too small for the key, the bytes have an unspecified value.
     ///
     /// The key must either grant the caller read permission, or grant
     /// the caller search permission when searched for from the process
     /// keyrings (i.e., the key is possessed).
-    pub fn read<T: AsMut<[u8]>>(&self, buffer: &mut T) -> Result<usize, KeyError> {
+    pub fn read<T: AsMut<[u8]> + ?Sized>(&self, buffer: &mut T) -> Result<usize, KeyError> {
+        let buffer = buffer.as_mut();
         // TODO: alternate key types? Currenlty we don't support KeyType::BigKey
         let len = ffi::keyctl!(
             KeyCtlOperation::Read,
             self.0.as_raw_id() as libc::c_ulong,
-            buffer.as_mut().as_mut_ptr() as _,
-            buffer.as_mut().len() as _
+            buffer.as_mut_ptr() as _,
+            buffer.len() as _
         )? as usize;
         Ok(len)
     }
@@ -108,11 +110,12 @@ impl Key {
     /// A negatively instantiated key (see the description of [Key::reject])
     /// can be positively instantiated with this operation.
     pub fn update<T: AsRef<[u8]>>(&self, update: &T) -> Result<(), KeyError> {
+        let update = update.as_ref();
         _ = ffi::keyctl!(
             KeyCtlOperation::Update,
             self.0.as_raw_id() as libc::c_ulong,
-            update.as_ref().as_ptr() as _,
-            update.as_ref().len() as _
+            update.as_ptr() as _,
+            update.len() as _
         )?;
         Ok(())
     }
@@ -355,5 +358,25 @@ mod tests {
         let len = key.read(&mut buf).unwrap();
         assert_eq!("wow".as_bytes(), &buf[..len]);
         key.invalidate().unwrap()
+    }
+
+    #[test]
+    fn test_buffer_sizing() {
+        let secret = "Test Data";
+
+        // Obtain the Process keyring, create for the test process if necessary.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Process, true).unwrap();
+
+        // Create the key
+        let key = ring.add_key("my-super-secret-test-key", secret).unwrap();
+
+        let apparent_len = key.read(&mut []).unwrap();
+        assert_eq!(apparent_len, secret.len());
+
+        // A buffer that is ensured to be zeroed when
+        // out of scope
+        let mut buf = Zeroizing::new([0u8; 4096]);
+        let len = key.read(&mut buf).unwrap();
+        assert_eq!(len, secret.len());
     }
 }
