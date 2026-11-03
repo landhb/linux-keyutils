@@ -169,12 +169,15 @@ impl KeyRing {
             KeyCtlOperation::Read,
             self.id.as_raw_id() as libc::c_ulong,
             buffer.as_mut_ptr() as _,
-            buffer.capacity() as _
+            (buffer.capacity() * core::mem::size_of::<KeySerialId>()) as _
         )? as usize;
+
+        // The len is the actual size of the ring, not the consumed buffer.
+        let kernel_len = len / core::mem::size_of::<KeySerialId>();
 
         // Set the size of the results
         unsafe {
-            buffer.set_len(len / core::mem::size_of::<KeySerialId>());
+            buffer.set_len(kernel_len.min(max));
         }
 
         // Remap the results to complete keys
@@ -447,6 +450,7 @@ mod test {
         let items = sess.get_links(200).unwrap();
         assert!(!items.contains(&thread));
     }
+
     #[test]
     fn test_link_unlink_keyrings_with_id() {
         // Get a couple of unlinked keyrings to test
@@ -521,5 +525,22 @@ mod test {
         // Assert that the key is no longer on the ring
         let items = ring.get_links(200).unwrap();
         assert!(!items.contains(&key));
+    }
+
+    #[test]
+    fn get_linked_maximum() {
+        // Ensure a ring that is definitely filled with at least the thread ring link.
+        let ring = KeyRing::from_special_id(KeyRingIdentifier::Thread, true).unwrap();
+        assert!(ring.id.as_raw_id() > 0);
+        let _key0 = ring.add_key("test_read_key0", b"test").unwrap();
+
+        // We must not get any items if we did not request them.
+        let items = ring.get_links(0).unwrap();
+        assert_eq!(items.len(), 0);
+
+        // The first link we read might not be a linked item, we skip it.
+        let items = ring.get_links(1).unwrap();
+        assert!(items.len() <= 1);
+        assert!(items.capacity() >= 1);
     }
 }
